@@ -109,6 +109,8 @@
   .media .tag.image { background: var(--ok); }
   .media h4 { margin: 4px 0; }
   .media p { margin: 4px 0; font-size: .9rem; color: var(--muted); }
+  .video-embed { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; }
+  .video-embed iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
 
   /* UDL choice */
   .udl-tip { font-size: .9rem; color: var(--muted); font-style: italic; margin: 8px 0 0; }
@@ -190,6 +192,72 @@ const JSONBIN = {
 const PARTICIPANT_KEY = "ka1adu_progress_v1";
 
 /* ============================================================
+   CENTRAAL MEDIABLOK
+   ------------------------------------------------------------
+   Vul hier per code je media in. Laat leeg = nette placeholder
+   met beschrijving blijft staan.
+
+   Per item:
+   - type: "youtube" | "vimeo" | "audio" | "image"  (mag je weglaten
+     voor video, dan wordt op basis van "src" geraden)
+   - src:  voor youtube = enkel de VIDEO-ID (deel na v= in de link)
+           voor vimeo   = enkel het nummer uit de Vimeo-link
+           voor audio   = bestandsnaam, bv. "media/welkom.mp3"
+           voor image   = bestandsnaam, bv. "media/routekaart.png"
+
+   Voorbeelden (verwijder de // om te activeren):
+   v0_1:  { type:"youtube", src:"dQw4w9WgXcQ" },
+   a0_1:  { type:"audio",   src:"media/welkom.mp3" },
+   img0_1:{ type:"image",   src:"media/routekaart.png" },
+   ============================================================ */
+const MEDIA = {
+  // ---- Module 0 ----
+  v0_1:   { src:"" },   // Video 0.1 · Welkom door consortiumcoördinator
+  a0_1:   { src:"" },   // Audio 0.1 · Welkom in luistervorm
+  img0_1: { src:"" },   // Afbeelding 0.1 · Routekaart Erasmus+ traject
+  img0_2: { src:"" },   // Afbeelding 0.2 · Cursusoverzicht
+
+  // ---- Module 1 ----
+  v1_1:   { src:"" },   // Video 1.1 · Erasmus+ uitgelegd in 4 minuten
+  a1_1:   { src:"" },   // Audio 1.1 · Erasmus+ in 2 minuten
+  img1_1: { src:"" },   // Infographic 1.1 · Erasmus+ in één beeld
+  img1_2: { src:"" },   // Afbeelding 1.2 · Brug internationale praktijk en CVO
+
+  // ---- Module 2 ----
+  v2_1:   { src:"" },   // Video 2.1 · De vier mobiliteitsvormen
+  img2_1: { src:"" },   // Infographic 2.1 · Vier vormen van staff mobility
+  img2_2: { src:"" },   // Afbeelding 2.2 · Van accreditatie naar impact
+  v2_3:   { src:"" },   // Video 2.3 · Deelnemen namens jezelf, je CVO en het consortium
+  img2_3: { src:"" },   // Afbeelding 2.3 · Drie niveaus van deelname
+
+  // ---- Module 3 ----
+  img3_1: { src:"" },   // Infographic 3.1 · Strategisch kompas
+  a3_1:   { src:"" },   // Audio 3.1 · Strategisch kompas kort uitgelegd
+  img3_2: { src:"" },   // Infographic 3.2 · Drie Erasmusplan-doelstellingen
+  img3_3: { src:"" },   // Infographic 3.3 · Vier Erasmus+-brillen
+  v3_3:   { src:"" },   // Video 3.3 · De horizontale prioriteiten uitgelegd
+  img3_4: { src:"" },   // Infographic 3.4 · De 6 clusters
+
+  // ---- Module 4 ----
+  v4_1:   { src:"" },   // Video 4.1 · Sterke learning outcomes formuleren
+  a4_2:   { src:"" },   // Audio 4.2 · Observeren met een onderzoekende houding
+  img4_3: { src:"" },   // Checklist 4.3 · Voor, tijdens en na mobiliteit
+
+  // ---- Module 5 ----
+  img5_2: { src:"" },   // Afbeelding 5.2 · Van fiche naar mobiliteit
+
+  // ---- Module 6 ----
+  v6_1:   { src:"" },   // Video 6.1 · Wat betaalt Erasmus+ wel en niet?
+  img6_1: { src:"" },   // Infographic 6.1 · Budget in eenvoudige taal
+  img6_2: { src:"" },   // Checklist 6.2 · Praktische documenten
+
+  // ---- Module 7 ----
+  a7_1:   { src:"" },   // Audio 7.1 · Reflecteren tijdens mobiliteit
+  img7_2: { src:"" },   // Infographic 7.2 · Disseminatiemenu
+  v7_3:   { src:"" },   // Video 7.3 · Impact hoeft niet groot te starten
+};
+
+/* ============================================================
    CURSUSINHOUD
    ============================================================ */
 const COURSE = [
@@ -203,9 +271,9 @@ const COURSE = [
 <p>Deze cursus helpt je om te begrijpen wat Erasmus+ is, wat KA1 staff mobility betekent, hoe je mobiliteit aansluit bij onze Erasmusplan-doelstellingen, hoe je je eigen leervragen scherper formuleert en wat de meerwaarde is voor jezelf, je CVO en het consortium.</p>
 <p>Erasmus+ is geen losse nascholing in het buitenland. Het is een leerervaring die deel uitmaakt van een ruimer traject van professionalisering, internationalisering en kwaliteitsontwikkeling. Aan het einde van deze cursus vul je je persoonlijke mobiliteitsfiche in. Die fiche gebruik je vóór, tijdens en na je mobiliteit.</p>
 <p class="udl-tip">Je kan deze cursus lezen, beluisteren of bekijken. Kies wat het best bij jou past. De drie vormen bevatten dezelfde informatie.</p>
-<div class="media"><span class="tag">Video 0.1 · 2 min</span><h4>Welkom door consortiumcoördinator</h4><p>Talking head. Menselijk welkom en duidelijke verwachting. Plaats hier later je embed-code of videolink.</p></div>
-<div class="media"><span class="tag audio">Audio 0.1 · 2 min</span><h4>Welkom in luistervorm</h4><p>Zelfde script als de video, als mp3 voor wie liever luistert.</p></div>
-<div class="media"><span class="tag image">Afbeelding 0.1</span><h4>Routekaart Erasmus+ traject</h4><p>Drie fasen: voor vertrek (online cursus, leervragen, voorbereiding) · tijdens (observeren, vragen stellen, documenteren, reflecteren) · na terugkeer (delen, toepassen, impact zichtbaar maken, leren binnen het consortium).</p></div>`,
+[[MEDIA:v0_1|Video 0.1 · 2 min — Welkom door consortiumcoördinator|Talking head. Menselijk welkom en duidelijke verwachting. Plaats hier later je embed-code of videolink.]]
+[[MEDIA:a0_1|Audio 0.1 · 2 min — Welkom in luistervorm|Zelfde script als de video, als mp3 voor wie liever luistert.]]
+[[MEDIA:img0_1|Afbeelding 0.1 — Routekaart Erasmus+ traject|Routekaart met drie fasen van het Erasmus+ traject: voor vertrek, tijdens mobiliteit en na terugkeer]]`,
         items: [
           { type: "open", id: "m0_start", q: "Wat hoop jij vooral uit je mobiliteit te halen? Antwoord in 3 tot 5 zinnen." }
         ]
@@ -216,7 +284,7 @@ const COURSE = [
 <p>Deze cursus bestaat uit een verplicht basistraject en een verdiepend traject. Het verplichte basistraject duurt gemiddeld 2 uur en rond je af vóór je mobiliteit. Het verdiepend traject (module 6 en 7) is aanbevolen als je meer ondersteuning wil rond praktische afspraken, budget, observatie, verslaggeving, disseminatie en impact.</p>
 <p>Je hoeft de cursus niet in één keer af te werken. We raden aan om eerst module 0 tot en met 3 te doorlopen en daarna even tijd te nemen om na te denken over je eigen leervragen.</p>
 <p>Je rondt de cursus af wanneer je de korte checks hebt ingevuld, je cluster en Erasmusplan-doelstelling hebt gekozen, je persoonlijke leervragen hebt geformuleerd, de eindcheck hebt gemaakt en je persoonlijke mobiliteitsfiche hebt ingediend.</p>
-<div class="media"><span class="tag image">Afbeelding 0.2</span><h4>Cursusoverzicht</h4><p>Visuele flow: Start → Erasmus+ begrijpen → KA1 en consortium begrijpen → Strategisch kompas toepassen → Mobiliteit voorbereiden → Mobiliteitsfiche indienen.</p></div>`,
+[[MEDIA:img0_2|Afbeelding 0.2 — Cursusoverzicht|Visuele flow: Start, Erasmus+ begrijpen, KA1 en consortium begrijpen, Strategisch kompas toepassen, Mobiliteit voorbereiden, Mobiliteitsfiche indienen.]]`,
         items: [
           { type: "mc", id: "m0_check", q: "Wat is het belangrijkste doel van deze cursus?",
             options: ["Een algemene Europese geschiedenisles geven","De deelnemer voorbereiden op een bewuste en doelgerichte Erasmus+ mobiliteit","Alle details van de programmagids uit het hoofd leren","Een toeristisch programma voorbereiden"],
@@ -235,9 +303,9 @@ const COURSE = [
 <p>Voor deelnemers betekent Erasmus+ dat je in een ander land kan leren van collega's, organisaties en praktijken. Je doet nieuwe inzichten op, stelt je eigen werking in vraag en neemt ideeën mee naar je eigen onderwijscontext. Voor organisaties is het een manier om via internationale samenwerking kwaliteit, innovatie en professionalisering te versterken. Het gaat dus niet alleen over reizen, maar vooral over leren, delen en verbeteren.</p>
 <p>Binnen het volwassenenonderwijs is Erasmus+ bijzonder relevant, omdat CVO's werken rond thema's die sterk Europees gedeeld worden: levenslang leren, inclusie, basisvaardigheden, taalontwikkeling, arbeidsmarktgerichte trajecten, digitale transformatie, duurzaamheid, kwaliteitsontwikkeling en de begeleiding van volwassen lerenden.</p>
 <div class="kernzin"><strong>Kernzin:</strong> Erasmus+ is een Europees leerprogramma dat mensen en organisaties helpt om via internationale ervaring sterker te worden in hun eigen praktijk.</div>
-<div class="media"><span class="tag">Video 1.1 · 4 min</span><h4>Erasmus+ uitgelegd in 4 minuten</h4><p>Animatie of voice-over bij slides.</p></div>
-<div class="media"><span class="tag audio">Audio 1.1 · 2 min</span><h4>Erasmus+ in 2 minuten</h4></div>
-<div class="media"><span class="tag image">Infographic 1.1</span><h4>Erasmus+ in één beeld</h4><p>Midden: Erasmus+. Errond: leren over grenzen heen, professionele ontwikkeling, internationale samenwerking, impact op organisatie en praktijk. Met impact voor deelnemer, CVO en consortium.</p></div>`,
+[[MEDIA:v1_1|Video 1.1 · 4 min — Erasmus+ uitgelegd in 4 minuten|Animatie of voice-over bij slides.]]
+[[MEDIA:a1_1|Audio 1.1 · 2 min — Erasmus+ in 2 minuten|]]
+[[MEDIA:img1_1|Infographic 1.1 — Erasmus+ in één beeld|Infographic die Erasmus+ toont als Europees leerprogramma met impact op deelnemer, CVO en consortium]]`,
         items: [
           { type: "tf", id: "m1_tf", q: "Erasmus+ gaat alleen over studentenmobiliteit.", correct: false,
             fb: "Erasmus+ ondersteunt ook personeel, organisaties en samenwerkingsprojecten binnen onder meer volwasseneneducatie." },
@@ -253,7 +321,7 @@ const COURSE = [
 <p>Volwasseneneducatie staat midden in maatschappelijke veranderingen. CVO's werken met diverse cursisten, uiteenlopende leervragen en veranderende verwachtingen vanuit samenleving en arbeidsmarkt. Erasmus+ helpt CVO's om internationaal te leren rond vragen zoals: hoe begeleiden andere landen volwassen lerenden, hoe organiseren ze trajectbegeleiding en basisvaardigheden, hoe spelen ze in op arbeidsmarktnoden, hoe combineren ze taalverwerving met beroepsopleiding, hoe gebruiken ze AI en blended learning, hoe meten ze kwaliteit en impact, en hoe maken ze duurzaamheid concreet.</p>
 <p>Voor volwasseneneducatie is Erasmus+ zo een hefboom voor professionalisering, internationale oriëntatie, curriculuminnovatie, inclusieve didactiek, digitale transformatie, kwaliteitsontwikkeling, samenwerking tussen CVO's en duurzame implementatie van vernieuwing. Een mobiliteit is waardevol wanneer de deelnemer niet alleen terugkomt met inspiratie, maar met inzichten die vertaald kunnen worden naar de eigen praktijk.</p>
 <p><strong>Praktijkvoorbeeld.</strong> Een leerkracht NT2 gaat op jobshadowing bij een centrum in Zweden dat taalonderwijs combineert met arbeidsmarktgerichte trajecten. De deelnemer observeert hoe cursisten gescreend worden, hoe taal en beroep geïntegreerd worden, hoe begeleiders en lesgevers samenwerken en hoe het centrum contact houdt met werkgevers. Na terugkeer deelt de deelnemer de inzichten met het team en formuleert samen één verbeteridee voor het eigen CVO.</p>
-<div class="media"><span class="tag image">Afbeelding 1.2</span><h4>Brug tussen internationale praktijk en CVO-praktijk</h4><p>Links internationale praktijk · midden deelnemer observeert, reflecteert, vertaalt · rechts CVO-praktijk.</p></div>`,
+[[MEDIA:img1_2|Afbeelding 1.2 — Brug tussen internationale praktijk en CVO-praktijk|Schema dat toont hoe een deelnemer inzichten uit een buitenlandse praktijk vertaalt naar het eigen CVO]]`,
         items: [
           { type: "mc", id: "m1_scenario", q: "Een deelnemer volgt in Italië een cursus over AI in taalonderwijs, geeft na terugkeer een korte presentatie en werkt met het team één lesidee uit. Waarom past dit binnen Erasmus+?",
             options: ["Omdat de deelnemer een cursus heeft gevolgd in het buitenland","Omdat de buitenlandse ervaring vertaald werd naar teamleren en praktijkontwikkeling","Omdat AI altijd verplicht is binnen Erasmus+","Omdat elke cursus automatisch impact heeft"],
@@ -275,8 +343,8 @@ const COURSE = [
 <tr><td>Teaching assignment</td><td>Je geeft zelf les of opleiding bij een buitenlandse organisatie</td><td>Als wederzijds leren en uitwisseling centraal staan</td></tr>
 <tr><td>Invited expert</td><td>Een buitenlandse expert komt naar Vlaanderen</td><td>Als meerdere CVO's tegelijk willen leren rond een thema</td></tr>
 </tbody></table>
-<div class="media"><span class="tag">Video 2.1 · 4-5 min</span><h4>De vier mobiliteitsvormen</h4><p>Slides met voice-over.</p></div>
-<div class="media"><span class="tag image">Infographic 2.1</span><h4>Vier vormen van staff mobility</h4></div>`,
+[[MEDIA:v2_1|Video 2.1 · 4-5 min — De vier mobiliteitsvormen|Slides met voice-over.]]
+[[MEDIA:img2_1|Infographic 2.1 — Vier vormen van staff mobility|Infographic met vier vormen van KA1 staff mobility: course, jobshadowing, teaching assignment en invited expert]]`,
         items: [
           { type: "mc", id: "m2_scenario", q: "Je wil weten hoe een centrum in Finland trajectbegeleiding organiseert en hoe begeleiders met leraren samenwerken. Welke vorm past het best?",
             options: ["Course","Jobshadowing","Invited expert","Teaching assignment"], correct: 1,
@@ -289,7 +357,7 @@ const COURSE = [
 <p>Ons consortium werkt binnen een Erasmus-accreditatie. We vertrekken niet van losse, eenmalige mobiliteiten, maar van een meerjarig Erasmusplan. Een accreditatie geeft vereenvoudigde toegang tot KA1-financiering, op voorwaarde dat we werken vanuit duidelijke doelstellingen, kwaliteitsafspraken en opvolging.</p>
 <p>Voor jou betekent dit dat je mobiliteit binnen een ruimer plan past, dat je leervragen aansluiten bij gedeelde doelstellingen, dat je ervaring relevant is voor je CVO en het consortium en dat je bijdraagt aan impact op langere termijn.</p>
 <div class="kernzin"><strong>Kernzin:</strong> de Erasmus-accreditatie zorgt ervoor dat onze mobiliteiten deel uitmaken van een strategisch internationaliseringstraject, en niet van losse professionaliseringsactiviteiten.</div>
-<div class="media"><span class="tag image">Afbeelding 2.2</span><h4>Van accreditatie naar impact</h4><p>Accreditatie → Erasmusplan → jaarlijkse mobiliteiten → leren van deelnemers → toepassing in CVO's → consortiumimpact.</p></div>`,
+[[MEDIA:img2_2|Afbeelding 2.2 — Van accreditatie naar impact|Schema dat toont hoe een Erasmus-accreditatie via het Erasmusplan en mobiliteiten leidt tot impact in CVO's en consortium]]`,
         items: [
           { type: "tf", id: "m2_tf", q: "Een Erasmus-accreditatie betekent dat elke mobiliteit losstaat van de doelstellingen van het consortium.", correct: false,
             fb: "Een accreditatie vertrekt net vanuit een meerjarig Erasmusplan met duidelijke doelstellingen." }
@@ -306,8 +374,8 @@ const COURSE = [
 <tr><td>Hosting organisation</td><td>Leerervaring aanbieden, expertise delen en uitwisseling mogelijk maken</td></tr>
 <tr><td>Consortium</td><td>Inzichten bundelen en vertalen naar bredere kwaliteitsontwikkeling</td></tr>
 </tbody></table>
-<div class="media"><span class="tag">Video 2.3 · 3 min</span><h4>Deelnemen namens jezelf, je CVO en het consortium</h4></div>
-<div class="media"><span class="tag image">Afbeelding 2.3</span><h4>Drie niveaus van deelname</h4><p>Ik als deelnemer · mijn CVO · het consortium, met pijlen in beide richtingen.</p></div>`,
+[[MEDIA:v2_3|Video 2.3 · 3 min — Deelnemen namens jezelf, je CVO en het consortium|]]
+[[MEDIA:img2_3|Afbeelding 2.3 — Drie niveaus van deelname|Schema dat toont dat een deelnemer leert voor zichzelf, voor het eigen CVO en voor het consortium]]`,
         items: [
           { type: "open", id: "m2_open", q: "Wat betekent het voor jou om niet alleen als individuele deelnemer, maar ook namens je CVO en het consortium deel te nemen? Antwoord in 3 tot 5 zinnen." }
         ]
@@ -327,8 +395,8 @@ const COURSE = [
 <tr><td>Horizontale prioriteit</td><td>Welke Europese kwaliteitsbril neem ik mee?</td></tr>
 <tr><td>Impact</td><td>Wat levert mijn mobiliteit op voor mezelf, mijn CVO en het consortium?</td></tr>
 </tbody></table>
-<div class="media"><span class="tag image">Infographic 3.1</span><h4>Strategisch kompas</h4><p>Kompas: Noord = doelstellingen, Oost = prioriteiten, Zuid = 6 clusters, West = impact, midden = mijn mobiliteit.</p></div>
-<div class="media"><span class="tag audio">Audio 3.1 · 2 min</span><h4>Strategisch kompas kort uitgelegd</h4></div>`,
+[[MEDIA:img3_1|Infographic 3.1 — Strategisch kompas|Kompas met in het midden mijn mobiliteit en daarrond Erasmusplan-doelstellingen, horizontale prioriteiten, 6 clusters en impact]]
+[[MEDIA:a3_1|Audio 3.1 · 2 min — Strategisch kompas kort uitgelegd|]]`,
         items: [
           { type: "mc", id: "m3_mc", q: "Wat is het strategisch kompas?",
             options: ["Een reisdocument voor deelnemers","Een schema dat helpt om je mobiliteit te verbinden met doelen, prioriteiten, clusters en impact","Een lijst met toeristische afspraken","Een financieel document"],
@@ -341,7 +409,7 @@ const COURSE = [
 <p><strong>1. Curriculuminnovatie</strong> — vernieuwen en versterken van onderwijsinhoud, trajecten en didactiek. Aandacht voor transversale en soft skills, snel inspelen op een veranderende arbeidsmarkt, en aandacht voor elke lerende en zorg.</p>
 <p><strong>2. Duurzaamheid</strong> — duurzaamheid in curriculum, infrastructuur en werking. Aandacht voor het verduurzamen van infrastructuur en het integreren van SDG's en green skills.</p>
 <p><strong>3. Digitalisering</strong> — digitale innovatie en duurzame verankering van vernieuwing. Aandacht voor internationale good practices, het duurzaam verankeren van innovatie en veranderingsprocessen.</p>
-<div class="media"><span class="tag image">Infographic 3.2</span><h4>Drie Erasmusplan-doelstellingen</h4></div>`,
+[[MEDIA:img3_2|Infographic 3.2 — Drie Erasmusplan-doelstellingen|Infographic met de drie Erasmusplan-doelstellingen van het consortium: curriculuminnovatie, duurzaamheid en digitalisering]]`,
         items: [
           { type: "open", id: "m3_doel", q: "Welke Erasmusplan-doelstelling sluit op dit moment het sterkst aan bij jouw mobiliteit of interesse? Motiveer kort." }
         ]
@@ -354,8 +422,8 @@ const COURSE = [
 <p><strong>2. Digitale transformatie</strong> — digitale vaardigheden en didactiek, geletterdheid, AI, blended learning, digitale processen. <em>Welke digitale inzichten of tools kunnen relevant zijn voor mijn CVO?</em></p>
 <p><strong>3. Milieu en duurzaamheid</strong> — duurzame keuzes, groene praktijken, bewust omgaan met ecologische impact. <em>Hoe neem ik duurzaamheid mee in mijn mobiliteit?</em></p>
 <p><strong>4. Democratische participatie en Europese waarden</strong> — actief burgerschap, Europese waarden, intercultureel leren, kritisch denken, mediageletterdheid. <em>Hoe versterkt mijn mobiliteit Europees bewustzijn of intercultureel leren?</em></p>
-<div class="media"><span class="tag image">Infographic 3.3</span><h4>Vier Erasmus+-brillen</h4></div>
-<div class="media"><span class="tag">Video 3.3 · 4 min</span><h4>De horizontale prioriteiten uitgelegd</h4></div>`,
+[[MEDIA:img3_3|Infographic 3.3 — Vier Erasmus+-brillen|Infographic met vier brillen die de horizontale Erasmus+-prioriteiten voorstellen]]
+[[MEDIA:v3_3|Video 3.3 · 4 min — De horizontale prioriteiten uitgelegd|]]`,
         items: [
           { type: "open", id: "m3_prio", q: "Welke horizontale prioriteit wil jij zeker meenemen in je mobiliteit? Waarom?" }
         ]
@@ -370,7 +438,7 @@ const COURSE = [
 <p><strong>Cluster 4 — Datagedreven beleid en kwaliteitszorg.</strong> Trajectopvolging, instroom-uitstroomanalyse, doelgroepmonitoring, cursistendata, impactmeting, kwaliteitszorg.</p>
 <p><strong>Cluster 5 — Leiderschap, projectmanagement en veranderkracht.</strong> Veranderingsprocessen, projectmanagement, teamleren, leiderschap, omgaan met weerstand, duurzame implementatie van innovatie.</p>
 <p><strong>Cluster 6 — Duurzaamheid en green skills.</strong> SDG's, green skills, duurzame infrastructuur, outdoor learning, ecologische transitie, duurzaam curriculum.</p>
-<div class="media"><span class="tag image">Infographic 3.4</span><h4>De 6 clusters</h4></div>`,
+[[MEDIA:img3_4|Infographic 3.4 — De 6 clusters|Infographic met de 6 inhoudelijke clusters van het KA1 ADU-consortium]]`,
         items: [
           { type: "mc", id: "m3_cluster", q: "Mijn mobiliteit past vooral binnen:",
             options: ["Cluster 1 — Brede cursistenbegeleiding en inclusieve didactiek","Cluster 2 — Arbeidsmarktgericht en geïntegreerd curriculum","Cluster 3 — AI, evaluatie en digitale transformatie","Cluster 4 — Datagedreven beleid en kwaliteitszorg","Cluster 5 — Leiderschap, projectmanagement en veranderkracht","Cluster 6 — Duurzaamheid en green skills"],
@@ -404,7 +472,7 @@ const COURSE = [
         html: `
 <p>Een goede mobiliteit vertrekt vanuit duidelijke learning outcomes. Een interesse is breed ("ik ben geïnteresseerd in AI"), een leervraag is gerichter ("hoe gebruiken lesgevers AI voor taalfeedback?"), en een learning outcome beschrijft wat jij na afloop beter begrijpt, kan toepassen of kan uitleggen ("na de mobiliteit kan ik drie manieren beschrijven waarop AI wordt ingezet voor taalfeedback en beoordelen welke bruikbaar is in mijn CVO").</p>
 <p>Gebruik de zin <em>"Na mijn mobiliteit kan ik …"</em> met werkwoorden als beschrijven, vergelijken, analyseren, toepassen, beoordelen, toelichten of vertalen naar de eigen context.</p>
-<div class="media"><span class="tag">Video 4.1 · 4 min</span><h4>Sterke learning outcomes formuleren</h4></div>`,
+[[MEDIA:v4_1|Video 4.1 · 4 min — Sterke learning outcomes formuleren|]]`,
         items: [
           { type: "field", id: "lo1", label: "Learning outcome 1", hint: "Na mijn mobiliteit kan ik …", input: "textarea" },
           { type: "field", id: "lo2", label: "Learning outcome 2", hint: "Na mijn mobiliteit kan ik …", input: "textarea" }
@@ -415,7 +483,7 @@ const COURSE = [
         html: `
 <p>Tijdens je mobiliteit verzamel je inzichten door te observeren, vragen te stellen en voorbeelden te documenteren. Observeer niet alleen wat een organisatie doet, maar ook waarom ze het zo doet, wie erbij betrokken is, welke voorwaarden nodig zijn en wat wel of niet overdraagbaar is naar je eigen CVO.</p>
 <p>Algemene observatievragen: Wat valt mij op? Welke keuzes maken zij anders dan wij? Welke aanpak lijkt sterk of roept vragen op? Welke randvoorwaarden maken deze praktijk mogelijk? Wat is bruikbaar voor mijn CVO, en wat moet ik eerst verder onderzoeken?</p>
-<div class="media"><span class="tag audio">Audio 4.2 · 2 min</span><h4>Observeren met een onderzoekende houding</h4></div>`,
+[[MEDIA:a4_2|Audio 4.2 · 2 min — Observeren met een onderzoekende houding|]]`,
         items: [
           { type: "field", id: "obs1", label: "Observatievraag 1", input: "textarea" },
           { type: "field", id: "obs2", label: "Observatievraag 2", input: "textarea" },
@@ -428,7 +496,7 @@ const COURSE = [
 <p><strong>Vóór:</strong> deze cursus afronden, je mobiliteitsfiche invullen, learning outcomes formuleren, praktische afspraken opvolgen, documenten tijdig bezorgen, contact met de hosting organisation voorbereiden en afstemmen met je CVO.</p>
 <p><strong>Tijdens:</strong> actief en professioneel deelnemen, respectvol communiceren, observaties noteren, vragen stellen vanuit je learning outcomes, aandacht voor je cluster en prioriteit, voorbeelden verzamelen indien toegestaan, rekening houden met privacy.</p>
 <p><strong>Na:</strong> reflecteren over je leerresultaten, inzichten delen binnen je CVO en het consortium, aangeven welke transfer mogelijk is, bijdragen aan disseminatie en eerlijk benoemen wat bruikbaar of verder te onderzoeken is.</p>
-<div class="media"><span class="tag image">Checklist 4.3</span><h4>Voor, tijdens en na mobiliteit</h4></div>`,
+[[MEDIA:img4_3|Checklist 4.3 — Voor, tijdens en na mobiliteit|Checklist met verwachtingen voor deelnemers vóór, tijdens en na de mobiliteit]]`,
         items: [
           { type: "multi", id: "m4_support", q: "Waar heb je op dit moment nog ondersteuning bij nodig?",
             options: ["Learning outcomes formuleren","Praktische documenten","Contact met de hosting organisation","Observatievragen","Disseminatie plannen","Momenteel geen extra ondersteuning"] }
@@ -493,8 +561,8 @@ const COURSE = [
 <tr><td>Groen reizen</td><td>Mogelijke stimulans voor duurzamer vervoer</td></tr>
 </tbody></table>
 <p>Belangrijk: lees afspraken vooraf goed na, hou bewijsstukken bij, meld wijzigingen tijdig, doe geen eigen financiële beloftes aan hosting organisations en stel vragen tijdig aan de consortiumcoördinator.</p>
-<div class="media"><span class="tag">Video 6.1 · 3 min</span><h4>Wat betaalt Erasmus+ wel en niet?</h4></div>
-<div class="media"><span class="tag image">Infographic 6.1</span><h4>Budget in eenvoudige taal</h4></div>`,
+[[MEDIA:v6_1|Video 6.1 · 3 min — Wat betaalt Erasmus+ wel en niet?|]]
+[[MEDIA:img6_1|Infographic 6.1 — Budget in eenvoudige taal|Infographic met de belangrijkste mogelijke onderdelen van het Erasmus+ budget]]`,
         items: [
           { type: "mc", id: "m6_scenario", q: "Je wil tijdens je mobiliteit een extra activiteit boeken die niet in het programma stond. Wat doe je best?",
             options: ["Gewoon boeken en achteraf indienen","Eerst nagaan of dit past binnen de afspraken en subsidieregels","De hosting organisation vragen het te factureren","De kost niet vermelden"],
@@ -506,7 +574,7 @@ const COURSE = [
         html: `
 <p>De exacte documenten verschillen per mobiliteitstype, maar meestal gaat het om: bevestiging van deelname, programma, afspraken met de hosting organisation, bewijs van aanwezigheid, reisdocumenten, facturen of betalingsbewijzen, verzekeringsinformatie, noodcontactgegevens en een verslag of reflectie na afloop.</p>
 <p><strong>Voor vertrek:</strong> is mijn mobiliteit goedgekeurd, is de periode duidelijk, ken ik de hosting organisation, heb ik de documenten, weet ik welke kosten mogen, heb ik learning outcomes en observatievragen, en stemde ik af met mijn CVO? <strong>Tijdens:</strong> verzamel aanwezigheidsbewijs, programma, notities, contactgegevens, materialen en foto's (met toestemming). <strong>Na:</strong> bezorg verslag, bewijsstukken, een disseminatieactie en feedback aan de coördinator.</p>
-<div class="media"><span class="tag image">Checklist 6.2</span><h4>Praktische documenten</h4></div>`,
+[[MEDIA:img6_2|Checklist 6.2 — Praktische documenten|Checklist met praktische documenten en afspraken voor, tijdens en na de Erasmus+ mobiliteit]]`,
         items: [
           { type: "multi", id: "m6_unclear", q: "Wat is voor jou nog onduidelijk?",
             options: ["Welke documenten ik nodig heb","Welke kosten subsidiabel zijn","Wat ik moet bewaren","Wat ik moet indienen na afloop","Wat mijn CVO verwacht","Alles is voldoende duidelijk"] }
@@ -522,7 +590,7 @@ const COURSE = [
         html: `
 <p>Niet elke indruk is meteen een bruikbaar inzicht. Maak onderscheid tussen observatie (wat zie ik?), interpretatie (wat betekent dit?), vergelijking (hoe verschilt dit van onze context?), transfer (wat kunnen wij hiermee?) en randvoorwaarden (wat is nodig?).</p>
 <p>Reflectiemodel na elke belangrijke observatie: Wat heb ik gezien of gehoord? Waarom lijkt dit belangrijk? Wat zegt dit over de werking van de organisatie? Wat is vergelijkbaar of verschillend met mijn CVO? Welke vertaling zie ik naar mijn context?</p>
-<div class="media"><span class="tag audio">Audio 7.1 · 2 min</span><h4>Reflecteren tijdens mobiliteit</h4></div>`,
+[[MEDIA:a7_1|Audio 7.1 · 2 min — Reflecteren tijdens mobiliteit|]]`,
         items: [
           { type: "field", id: "m7_obs", label: "Kies één mogelijke observatie: wat zou je kunnen zien, waarom relevant, en hoe vertalen naar je CVO?", input: "textarea" }
         ]
@@ -531,7 +599,7 @@ const COURSE = [
         goal: "Na deze pagina kan je een passende disseminatievorm kiezen.",
         html: `
 <p>Disseminatie betekent dat je inzichten deelt met anderen. Dat hoeft niet groot of formeel te zijn. Mogelijke vormen: korte presentatie, praktijkfiche, blogbericht, workshop, beleidsnota, materiaalmap, intervisie of consortiumdeling. Disseminatie is sterker als je concreet blijft, voorbeelden gebruikt, eerlijk bent over randvoorwaarden, ook vragen deelt en een kleine vervolgstap voorstelt.</p>
-<div class="media"><span class="tag image">Infographic 7.2</span><h4>Disseminatiemenu</h4></div>`,
+[[MEDIA:img7_2|Infographic 7.2 — Disseminatiemenu|Infographic met verschillende manieren om Erasmus+ inzichten te dissemineren]]`,
         items: [
           { type: "field", id: "m7_diss", label: "Welke disseminatievorm past bij jou, voor welke doelgroep, en waarom?", input: "textarea" }
         ]
@@ -540,7 +608,7 @@ const COURSE = [
         goal: "Na deze pagina kan je een eerste transferactie formuleren.",
         html: `
 <p>Impact ontstaat niet automatisch, maar wanneer inzichten worden opgepikt, besproken, getest of vertaald. Impact kan klein beginnen: een nieuwe observatievraag in een teamoverleg, een voorbeeld delen, een checklist aanpassen, een AI-tool kritisch testen of een werkvorm uitproberen in één groep.</p>
-<div class="media"><span class="tag">Video 7.3 · 3 min</span><h4>Impact hoeft niet groot te starten</h4></div>`,
+[[MEDIA:v7_3|Video 7.3 · 3 min — Impact hoeft niet groot te starten|]]`,
         items: [
           { type: "field", id: "m7_transfer", label: "Eén transferactie: wat kan je binnen één maand doen, wat heb je nodig, en wie betrek je?", input: "textarea" }
         ]
@@ -548,6 +616,58 @@ const COURSE = [
     ]
   }
 ];
+
+/* ============================================================
+   MEDIA RENDERING
+   ============================================================ */
+function mediaTagClass(kind){ return kind==="audio"?"audio":(kind==="image"?"image":""); }
+
+function renderMediaPlaceholder(code, label, desc) {
+  // Nette placeholder als er (nog) geen bron is ingevuld
+  let kind = "video";
+  if (code.startsWith("a")) kind = "audio";
+  if (code.startsWith("img")) kind = "image";
+  return `<div class="media"><span class="tag ${mediaTagClass(kind)}">${label}</span>`
+    + (desc?`<p>${desc}</p>`:"") + `</div>`;
+}
+
+function renderMedia(code, label, desc) {
+  const m = MEDIA[code];
+  const src = m && m.src ? String(m.src).trim() : "";
+  if (!src) return renderMediaPlaceholder(code, label, desc);
+
+  // Type bepalen: expliciet opgegeven, anders raden
+  let type = m.type;
+  if (!type) {
+    if (/\.(mp3|wav|ogg|m4a)$/i.test(src)) type = "audio";
+    else if (/\.(png|jpe?g|gif|webp|svg)$/i.test(src)) type = "image";
+    else if (code.startsWith("a")) type = "audio";
+    else if (code.startsWith("img")) type = "image";
+    else type = "youtube";
+  }
+
+  const titleAttr = label.replace(/"/g,"");
+  if (type === "youtube") {
+    return `<div class="media"><div class="video-embed"><iframe src="https://www.youtube.com/embed/${encodeURIComponent(src)}" allowfullscreen title="${titleAttr}"></iframe></div></div>`;
+  }
+  if (type === "vimeo") {
+    return `<div class="media"><div class="video-embed"><iframe src="https://player.vimeo.com/video/${encodeURIComponent(src)}" allowfullscreen title="${titleAttr}"></iframe></div></div>`;
+  }
+  if (type === "audio") {
+    return `<div class="media"><h4>${label}</h4><audio controls preload="none" style="width:100%;margin-top:8px;"><source src="${src}">Je browser ondersteunt geen audio. <a href="${src}">Download het bestand</a>.</audio></div>`;
+  }
+  if (type === "image") {
+    const alt = desc ? desc.replace(/"/g,"") : titleAttr;
+    return `<div class="media"><img src="${src}" alt="${alt}" style="width:100%;border-radius:10px;display:block;"></div>`;
+  }
+  return renderMediaPlaceholder(code, label, desc);
+}
+
+function expandMedia(html) {
+  // Vervangt [[MEDIA:code|label|beschrijving]] door echte media of placeholder
+  return html.replace(/\[\[MEDIA:([^\|\]]+)\|([^\|\]]*)\|([^\]]*)\]\]/g,
+    (_, code, label, desc) => renderMedia(code.trim(), label.trim(), desc.trim()));
+}
 
 /* ============================================================
    STATE
@@ -628,7 +748,7 @@ function renderModule() {
   m.pages.forEach(p => {
     html += `<div class="card"><h3 class="page-title">${p.title}</h3>`;
     if (p.goal) html += `<div class="leerdoel"><strong>Leerdoel:</strong> ${p.goal}</div>`;
-    html += p.html;
+    html += expandMedia(p.html);
     if (p.items && p.items.length) {
       html += `<div class="quiz">`;
       p.items.forEach(it => html += renderItem(it));
