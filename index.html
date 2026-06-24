@@ -1,0 +1,773 @@
+<!--
+  ============================================================
+  Erasmus+ KA1 ADU – interactieve webcursus
+  Voor publicatie op GitHub Pages
+  ============================================================
+
+  HOE PUBLICEREN
+  1. Sla dit bestand op als index.html
+  2. Maak een GitHub-repository (bv. ka1-cursus) en push index.html
+  3. Settings -> Pages -> Deploy from branch -> main / root
+  4. Je cursus staat dan op https://<gebruikersnaam>.github.io/ka1-cursus
+
+  CENTRALE OPSLAG INSTELLEN (JSONBin)
+  - Maak een bin aan op https://jsonbin.io
+  - Maak een Access Key met ALLEEN schrijfrechten (niet je Master Key)
+  - Vul hieronder BIN_ID en ACCESS_KEY in
+  - Let op: bij een publieke pagina is deze sleutel zichtbaar in de broncode.
+    Gebruik daarom een aparte bin en een write-only Access Key.
+  - Zolang je niets invult, werkt de cursus gewoon; inzendingen worden dan
+    enkel lokaal bewaard en kunnen als bestand gedownload worden.
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Erasmus+ KA1 ADU – voorbereid op jouw staff mobility</title>
+
+<style>
+  :root {
+    --kov-blue: #00387a;
+    --kov-blue-light: #1f5fa8;
+    --kov-accent: #e8a800;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --text: #1f2733;
+    --muted: #5a6675;
+    --border: #d9e0ea;
+    --ok: #1f8a4c;
+    --ok-bg: #e7f6ed;
+    --err: #b23b3b;
+    --err-bg: #fbeaea;
+    --radius: 14px;
+    --shadow: 0 2px 10px rgba(0,40,90,0.08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  a { color: var(--kov-blue-light); }
+
+  /* Layout */
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+  header.top {
+    background: linear-gradient(135deg, var(--kov-blue), var(--kov-blue-light));
+    color: #fff; padding: 28px 0;
+  }
+  header.top h1 { margin: 0 0 4px; font-size: 1.6rem; }
+  header.top p { margin: 0; opacity: .92; }
+  .layout { display: flex; gap: 24px; padding: 24px 0 60px; }
+  nav.sidebar {
+    flex: 0 0 250px; position: sticky; top: 16px; align-self: flex-start;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px; box-shadow: var(--shadow);
+    max-height: calc(100vh - 32px); overflow-y: auto;
+  }
+  nav.sidebar h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 8px 8px 6px; }
+  nav.sidebar button {
+    display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+    background: none; border: none; padding: 9px 10px; border-radius: 9px;
+    cursor: pointer; font-size: .92rem; color: var(--text);
+  }
+  nav.sidebar button:hover { background: #eef3fa; }
+  nav.sidebar button.active { background: var(--kov-blue); color: #fff; }
+  nav.sidebar button.active .mod-status { color: #fff; }
+  .mod-status { margin-left: auto; font-size: .85rem; color: var(--ok); }
+  .mod-optional { font-size: .7rem; background: #eef3fa; color: var(--muted); border-radius: 6px; padding: 1px 6px; }
+  main { flex: 1 1 auto; min-width: 0; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 26px 30px; box-shadow: var(--shadow); margin-bottom: 22px;
+  }
+  .module-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .module-head h2 { margin: 0; color: var(--kov-blue); font-size: 1.4rem; }
+  .richttijd { color: var(--muted); font-size: .9rem; }
+  h3.page-title { color: var(--kov-blue); border-bottom: 2px solid #eef3fa; padding-bottom: 6px; margin-top: 30px; }
+  .leerdoel {
+    background: #eef3fa; border-left: 4px solid var(--kov-blue-light);
+    padding: 10px 14px; border-radius: 8px; font-size: .95rem; margin: 12px 0 18px;
+  }
+  .kernzin { background: #fff8e6; border-left: 4px solid var(--kov-accent); padding: 10px 14px; border-radius: 8px; margin: 16px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: .94rem; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #eef3fa; }
+
+  /* Media placeholders */
+  .media {
+    border: 2px dashed var(--kov-blue-light); border-radius: 12px;
+    padding: 16px; margin: 16px 0; background: #f8fbff;
+  }
+  .media .tag {
+    display: inline-block; font-size: .72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .04em; background: var(--kov-blue); color: #fff;
+    padding: 2px 8px; border-radius: 6px; margin-bottom: 6px;
+  }
+  .media .tag.audio { background: var(--kov-blue-light); }
+  .media .tag.image { background: var(--ok); }
+  .media h4 { margin: 4px 0; }
+  .media p { margin: 4px 0; font-size: .9rem; color: var(--muted); }
+
+  /* UDL choice */
+  .udl-tip { font-size: .9rem; color: var(--muted); font-style: italic; margin: 8px 0 0; }
+
+  /* Quiz */
+  .quiz { background: #fbfdff; border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin: 16px 0; }
+  .quiz .q { font-weight: 600; margin: 14px 0 8px; }
+  .quiz .options label {
+    display: block; padding: 9px 12px; border: 1px solid var(--border); border-radius: 9px;
+    margin: 6px 0; cursor: pointer; background: #fff;
+  }
+  .quiz .options label:hover { border-color: var(--kov-blue-light); }
+  .quiz .options input { margin-right: 8px; }
+  .feedback { margin-top: 8px; padding: 10px 12px; border-radius: 9px; font-size: .92rem; display: none; }
+  .feedback.show { display: block; }
+  .feedback.ok { background: var(--ok-bg); color: var(--ok); border: 1px solid #bfe6cd; }
+  .feedback.err { background: var(--err-bg); color: var(--err); border: 1px solid #f0c9c9; }
+  .open-q textarea, .field textarea, .field input, .field select {
+    width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px;
+    font-family: inherit; font-size: .95rem; margin-top: 4px; background: #fff;
+  }
+  .field { margin: 12px 0; }
+  .field label { font-weight: 600; font-size: .93rem; }
+  .field .hint { font-weight: 400; color: var(--muted); font-size: .85rem; }
+
+  /* Buttons */
+  .btn {
+    background: var(--kov-blue); color: #fff; border: none; border-radius: 9px;
+    padding: 10px 18px; font-size: .95rem; cursor: pointer; font-weight: 600;
+  }
+  .btn:hover { background: var(--kov-blue-light); }
+  .btn.secondary { background: #eef3fa; color: var(--kov-blue); }
+  .btn.secondary:hover { background: #e0e9f5; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+  .nav-buttons { display: flex; justify-content: space-between; margin: 26px 0 10px; gap: 10px; }
+
+  .complete-toggle { display: flex; align-items: center; gap: 10px; margin-top: 20px; padding: 12px 14px; background: #eef3fa; border-radius: 10px; }
+  .complete-toggle input { width: 18px; height: 18px; }
+
+  .save-status { font-size: .88rem; color: var(--muted); margin-top: 8px; min-height: 18px; }
+
+  /* Progress bar */
+  .progress-outer { background: #e2e9f2; border-radius: 999px; height: 10px; margin: 14px 0 4px; overflow: hidden; }
+  .progress-inner { background: var(--kov-accent); height: 100%; width: 0%; transition: width .3s; }
+
+  @media (max-width: 820px) {
+    .layout { flex-direction: column; }
+    nav.sidebar { position: static; flex: none; max-height: none; }
+    .card { padding: 20px 18px; }
+  }
+  .hidden { display: none; }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <h1>Erasmus+ KA1 ADU: voorbereid op jouw staff mobility</h1>
+    <p>Online voorbereiding voor deelnemers aan een KA1 ADU-mobiliteit – consortium Katholiek Onderwijs Vlaanderen</p>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="sidebar" id="sidebar">
+    <h2>Modules</h2>
+    <div class="progress-outer"><div class="progress-inner" id="progressBar"></div></div>
+    <div id="navItems"></div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<script>
+/* ============================================================
+   CONFIGURATIE – centrale opslag (JSONBin)
+   Vul je eigen waarden in. Laat leeg om enkel lokaal te werken.
+   ============================================================ */
+const JSONBIN = {
+  BIN_ID: "",       // bv. "65f0a1b2c3..."  (laat leeg = lokaal)
+  ACCESS_KEY: "",   // write-only Access Key (NIET je Master Key)
+};
+const PARTICIPANT_KEY = "ka1adu_progress_v1";
+
+/* ============================================================
+   CURSUSINHOUD
+   ============================================================ */
+const COURSE = [
+  {
+    id: "m0", title: "Module 0 — Start en wegwijs", time: "10 min", optional: false,
+    pages: [
+      { title: "0.1 — Welkom bij je Erasmus+ traject",
+        goal: "Na deze pagina weet je waarom je deze cursus volgt en wat je aan het einde moet kunnen invullen.",
+        html: `
+<p>Welkom bij deze online voorbereiding op jouw Erasmus+ staff mobility. Je neemt deel aan een internationale leerervaring binnen het KA1 ADU-consortium van Katholiek Onderwijs Vlaanderen. Dat betekent dat je niet alleen vertrekt als individuele deelnemer, maar ook als vertegenwoordiger van je CVO en als deel van een breder consortium van 8 centra voor volwassenenonderwijs.</p>
+<p>Deze cursus helpt je om te begrijpen wat Erasmus+ is, wat KA1 staff mobility betekent, hoe je mobiliteit aansluit bij onze Erasmusplan-doelstellingen, hoe je je eigen leervragen scherper formuleert en wat de meerwaarde is voor jezelf, je CVO en het consortium.</p>
+<p>Erasmus+ is geen losse nascholing in het buitenland. Het is een leerervaring die deel uitmaakt van een ruimer traject van professionalisering, internationalisering en kwaliteitsontwikkeling. Aan het einde van deze cursus vul je je persoonlijke mobiliteitsfiche in. Die fiche gebruik je vóór, tijdens en na je mobiliteit.</p>
+<p class="udl-tip">Je kan deze cursus lezen, beluisteren of bekijken. Kies wat het best bij jou past. De drie vormen bevatten dezelfde informatie.</p>
+<div class="media"><span class="tag">Video 0.1 · 2 min</span><h4>Welkom door consortiumcoördinator</h4><p>Talking head. Menselijk welkom en duidelijke verwachting. Plaats hier later je embed-code of videolink.</p></div>
+<div class="media"><span class="tag audio">Audio 0.1 · 2 min</span><h4>Welkom in luistervorm</h4><p>Zelfde script als de video, als mp3 voor wie liever luistert.</p></div>
+<div class="media"><span class="tag image">Afbeelding 0.1</span><h4>Routekaart Erasmus+ traject</h4><p>Drie fasen: voor vertrek (online cursus, leervragen, voorbereiding) · tijdens (observeren, vragen stellen, documenteren, reflecteren) · na terugkeer (delen, toepassen, impact zichtbaar maken, leren binnen het consortium).</p></div>`,
+        items: [
+          { type: "open", id: "m0_start", q: "Wat hoop jij vooral uit je mobiliteit te halen? Antwoord in 3 tot 5 zinnen." }
+        ]
+      },
+      { title: "0.2 — Hoe werkt deze cursus?",
+        goal: "Na deze pagina weet je hoe de cursus is opgebouwd en wat je verplicht moet afronden.",
+        html: `
+<p>Deze cursus bestaat uit een verplicht basistraject en een verdiepend traject. Het verplichte basistraject duurt gemiddeld 2 uur en rond je af vóór je mobiliteit. Het verdiepend traject (module 6 en 7) is aanbevolen als je meer ondersteuning wil rond praktische afspraken, budget, observatie, verslaggeving, disseminatie en impact.</p>
+<p>Je hoeft de cursus niet in één keer af te werken. We raden aan om eerst module 0 tot en met 3 te doorlopen en daarna even tijd te nemen om na te denken over je eigen leervragen.</p>
+<p>Je rondt de cursus af wanneer je de korte checks hebt ingevuld, je cluster en Erasmusplan-doelstelling hebt gekozen, je persoonlijke leervragen hebt geformuleerd, de eindcheck hebt gemaakt en je persoonlijke mobiliteitsfiche hebt ingediend.</p>
+<div class="media"><span class="tag image">Afbeelding 0.2</span><h4>Cursusoverzicht</h4><p>Visuele flow: Start → Erasmus+ begrijpen → KA1 en consortium begrijpen → Strategisch kompas toepassen → Mobiliteit voorbereiden → Mobiliteitsfiche indienen.</p></div>`,
+        items: [
+          { type: "mc", id: "m0_check", q: "Wat is het belangrijkste doel van deze cursus?",
+            options: ["Een algemene Europese geschiedenisles geven","De deelnemer voorbereiden op een bewuste en doelgerichte Erasmus+ mobiliteit","Alle details van de programmagids uit het hoofd leren","Een toeristisch programma voorbereiden"],
+            correct: 1, fb: "Deze cursus helpt je om je mobiliteit professioneel voor te bereiden en te verbinden met de doelstellingen van het consortium." }
+        ]
+      }
+    ]
+  },
+  {
+    id: "m1", title: "Module 1 — Erasmus+ in gewone taal", time: "20 min", optional: false,
+    pages: [
+      { title: "1.1 — Wat is Erasmus+?",
+        goal: "Na deze pagina kan je in eigen woorden uitleggen wat Erasmus+ is.",
+        html: `
+<p>Erasmus+ is het programma van de Europese Unie voor onderwijs, opleiding, jeugd en sport. Het ondersteunt mensen en organisaties om te leren over grenzen heen.</p>
+<p>Voor deelnemers betekent Erasmus+ dat je in een ander land kan leren van collega's, organisaties en praktijken. Je doet nieuwe inzichten op, stelt je eigen werking in vraag en neemt ideeën mee naar je eigen onderwijscontext. Voor organisaties is het een manier om via internationale samenwerking kwaliteit, innovatie en professionalisering te versterken. Het gaat dus niet alleen over reizen, maar vooral over leren, delen en verbeteren.</p>
+<p>Binnen het volwassenenonderwijs is Erasmus+ bijzonder relevant, omdat CVO's werken rond thema's die sterk Europees gedeeld worden: levenslang leren, inclusie, basisvaardigheden, taalontwikkeling, arbeidsmarktgerichte trajecten, digitale transformatie, duurzaamheid, kwaliteitsontwikkeling en de begeleiding van volwassen lerenden.</p>
+<div class="kernzin"><strong>Kernzin:</strong> Erasmus+ is een Europees leerprogramma dat mensen en organisaties helpt om via internationale ervaring sterker te worden in hun eigen praktijk.</div>
+<div class="media"><span class="tag">Video 1.1 · 4 min</span><h4>Erasmus+ uitgelegd in 4 minuten</h4><p>Animatie of voice-over bij slides.</p></div>
+<div class="media"><span class="tag audio">Audio 1.1 · 2 min</span><h4>Erasmus+ in 2 minuten</h4></div>
+<div class="media"><span class="tag image">Infographic 1.1</span><h4>Erasmus+ in één beeld</h4><p>Midden: Erasmus+. Errond: leren over grenzen heen, professionele ontwikkeling, internationale samenwerking, impact op organisatie en praktijk. Met impact voor deelnemer, CVO en consortium.</p></div>`,
+        items: [
+          { type: "tf", id: "m1_tf", q: "Erasmus+ gaat alleen over studentenmobiliteit.", correct: false,
+            fb: "Erasmus+ ondersteunt ook personeel, organisaties en samenwerkingsprojecten binnen onder meer volwasseneneducatie." },
+          { type: "mc", id: "m1_mc", q: "Wat is binnen ons consortium het belangrijkste doel van een staff mobility?",
+            options: ["Een buitenlandse reiservaring aanbieden","Individueel leren verbinden met kwaliteitsontwikkeling in het CVO en het consortium","Deelnemers vrijstellen van professionalisering in het eigen CVO","Alleen toeristische info verzamelen"],
+            correct: 1, fb: "Individueel leren wordt binnen ons consortium altijd verbonden met kwaliteitsontwikkeling in CVO en consortium." },
+          { type: "open", id: "m1_open", q: "Leg in 2 zinnen uit wat Erasmus+ volgens jou kan betekenen voor het volwassenenonderwijs." }
+        ]
+      },
+      { title: "1.2 — Waarom Erasmus+ voor volwasseneneducatie?",
+        goal: "Na deze pagina kan je uitleggen waarom Erasmus+ relevant is voor CVO's.",
+        html: `
+<p>Volwasseneneducatie staat midden in maatschappelijke veranderingen. CVO's werken met diverse cursisten, uiteenlopende leervragen en veranderende verwachtingen vanuit samenleving en arbeidsmarkt. Erasmus+ helpt CVO's om internationaal te leren rond vragen zoals: hoe begeleiden andere landen volwassen lerenden, hoe organiseren ze trajectbegeleiding en basisvaardigheden, hoe spelen ze in op arbeidsmarktnoden, hoe combineren ze taalverwerving met beroepsopleiding, hoe gebruiken ze AI en blended learning, hoe meten ze kwaliteit en impact, en hoe maken ze duurzaamheid concreet.</p>
+<p>Voor volwasseneneducatie is Erasmus+ zo een hefboom voor professionalisering, internationale oriëntatie, curriculuminnovatie, inclusieve didactiek, digitale transformatie, kwaliteitsontwikkeling, samenwerking tussen CVO's en duurzame implementatie van vernieuwing. Een mobiliteit is waardevol wanneer de deelnemer niet alleen terugkomt met inspiratie, maar met inzichten die vertaald kunnen worden naar de eigen praktijk.</p>
+<p><strong>Praktijkvoorbeeld.</strong> Een leerkracht NT2 gaat op jobshadowing bij een centrum in Zweden dat taalonderwijs combineert met arbeidsmarktgerichte trajecten. De deelnemer observeert hoe cursisten gescreend worden, hoe taal en beroep geïntegreerd worden, hoe begeleiders en lesgevers samenwerken en hoe het centrum contact houdt met werkgevers. Na terugkeer deelt de deelnemer de inzichten met het team en formuleert samen één verbeteridee voor het eigen CVO.</p>
+<div class="media"><span class="tag image">Afbeelding 1.2</span><h4>Brug tussen internationale praktijk en CVO-praktijk</h4><p>Links internationale praktijk · midden deelnemer observeert, reflecteert, vertaalt · rechts CVO-praktijk.</p></div>`,
+        items: [
+          { type: "mc", id: "m1_scenario", q: "Een deelnemer volgt in Italië een cursus over AI in taalonderwijs, geeft na terugkeer een korte presentatie en werkt met het team één lesidee uit. Waarom past dit binnen Erasmus+?",
+            options: ["Omdat de deelnemer een cursus heeft gevolgd in het buitenland","Omdat de buitenlandse ervaring vertaald werd naar teamleren en praktijkontwikkeling","Omdat AI altijd verplicht is binnen Erasmus+","Omdat elke cursus automatisch impact heeft"],
+            correct: 1, fb: "De meerwaarde zit in de vertaling naar teamleren en praktijkontwikkeling, niet in het volgen van de cursus op zich." }
+        ]
+      }
+    ]
+  },
+  {
+    id: "m2", title: "Module 2 — KA1 staff mobility en ons consortium", time: "25 min", optional: false,
+    pages: [
+      { title: "2.1 — Wat is KA1 staff mobility?",
+        goal: "Na deze pagina kan je de verschillende vormen van staff mobility herkennen.",
+        html: `
+<p>KA1 staat voor Key Action 1 of Kernactie 1. Binnen Erasmus+ gaat KA1 over individuele leermobiliteit: deelnemers gaan naar het buitenland om professioneel te leren. Binnen ons KA1 ADU-consortium gaat het om mobiliteiten voor personeel in adult education. De mobiliteit draagt bij aan de professionele ontwikkeling van de deelnemer én aan die van het CVO en het consortium.</p>
+<table><thead><tr><th>Vorm</th><th>Wat is het?</th><th>Wanneer zinvol?</th></tr></thead><tbody>
+<tr><td>Course</td><td>Je volgt een gestructureerde cursus in het buitenland</td><td>Als je nieuwe kennis, methodieken of tools wil leren</td></tr>
+<tr><td>Jobshadowing</td><td>Je observeert collega's of een organisatie in een ander land</td><td>Als je wil zien hoe een praktijk concreet georganiseerd wordt</td></tr>
+<tr><td>Teaching assignment</td><td>Je geeft zelf les of opleiding bij een buitenlandse organisatie</td><td>Als wederzijds leren en uitwisseling centraal staan</td></tr>
+<tr><td>Invited expert</td><td>Een buitenlandse expert komt naar Vlaanderen</td><td>Als meerdere CVO's tegelijk willen leren rond een thema</td></tr>
+</tbody></table>
+<div class="media"><span class="tag">Video 2.1 · 4-5 min</span><h4>De vier mobiliteitsvormen</h4><p>Slides met voice-over.</p></div>
+<div class="media"><span class="tag image">Infographic 2.1</span><h4>Vier vormen van staff mobility</h4></div>`,
+        items: [
+          { type: "mc", id: "m2_scenario", q: "Je wil weten hoe een centrum in Finland trajectbegeleiding organiseert en hoe begeleiders met leraren samenwerken. Welke vorm past het best?",
+            options: ["Course","Jobshadowing","Invited expert","Teaching assignment"], correct: 1,
+            fb: "Jobshadowing is sterk wanneer je wil begrijpen hoe een aanpak in de praktijk georganiseerd wordt." }
+        ]
+      },
+      { title: "2.2 — Wat is een Erasmus-accreditatie?",
+        goal: "Na deze pagina kan je uitleggen waarom het consortium werkt vanuit een Erasmus-accreditatie.",
+        html: `
+<p>Ons consortium werkt binnen een Erasmus-accreditatie. We vertrekken niet van losse, eenmalige mobiliteiten, maar van een meerjarig Erasmusplan. Een accreditatie geeft vereenvoudigde toegang tot KA1-financiering, op voorwaarde dat we werken vanuit duidelijke doelstellingen, kwaliteitsafspraken en opvolging.</p>
+<p>Voor jou betekent dit dat je mobiliteit binnen een ruimer plan past, dat je leervragen aansluiten bij gedeelde doelstellingen, dat je ervaring relevant is voor je CVO en het consortium en dat je bijdraagt aan impact op langere termijn.</p>
+<div class="kernzin"><strong>Kernzin:</strong> de Erasmus-accreditatie zorgt ervoor dat onze mobiliteiten deel uitmaken van een strategisch internationaliseringstraject, en niet van losse professionaliseringsactiviteiten.</div>
+<div class="media"><span class="tag image">Afbeelding 2.2</span><h4>Van accreditatie naar impact</h4><p>Accreditatie → Erasmusplan → jaarlijkse mobiliteiten → leren van deelnemers → toepassing in CVO's → consortiumimpact.</p></div>`,
+        items: [
+          { type: "tf", id: "m2_tf", q: "Een Erasmus-accreditatie betekent dat elke mobiliteit losstaat van de doelstellingen van het consortium.", correct: false,
+            fb: "Een accreditatie vertrekt net vanuit een meerjarig Erasmusplan met duidelijke doelstellingen." }
+        ]
+      },
+      { title: "2.3 — Hoe is ons consortium opgebouwd?",
+        goal: "Na deze pagina begrijp je je plaats binnen het KA1 ADU-consortium.",
+        html: `
+<p>Je neemt deel aan een mobiliteit binnen het KA1 ADU-consortium van Katholiek Onderwijs Vlaanderen. Het consortium bestaat uit Katholiek Onderwijs Vlaanderen als coördinator, 8 centra voor volwassenenonderwijs als consortiumleden, deelnemers uit verschillende CVO's, hosting organisations in andere Europese landen en eventueel invited experts die naar Vlaanderen komen. De meerwaarde: niet elk CVO moet afzonderlijk zoeken, organiseren en opvolgen. We leren samen, bouwen expertise op en delen inzichten.</p>
+<table><thead><tr><th>Rol</th><th>Verantwoordelijkheid</th></tr></thead><tbody>
+<tr><td>Deelnemer</td><td>Voorbereiden, actief deelnemen, documenteren, reflecteren en delen</td></tr>
+<tr><td>CVO</td><td>Deelnemer ondersteunen en nadenken over transfer naar team of beleid</td></tr>
+<tr><td>Consortiumcoördinator</td><td>Kader bewaken, mobiliteiten ondersteunen, opvolging en impact stimuleren</td></tr>
+<tr><td>Hosting organisation</td><td>Leerervaring aanbieden, expertise delen en uitwisseling mogelijk maken</td></tr>
+<tr><td>Consortium</td><td>Inzichten bundelen en vertalen naar bredere kwaliteitsontwikkeling</td></tr>
+</tbody></table>
+<div class="media"><span class="tag">Video 2.3 · 3 min</span><h4>Deelnemen namens jezelf, je CVO en het consortium</h4></div>
+<div class="media"><span class="tag image">Afbeelding 2.3</span><h4>Drie niveaus van deelname</h4><p>Ik als deelnemer · mijn CVO · het consortium, met pijlen in beide richtingen.</p></div>`,
+        items: [
+          { type: "open", id: "m2_open", q: "Wat betekent het voor jou om niet alleen als individuele deelnemer, maar ook namens je CVO en het consortium deel te nemen? Antwoord in 3 tot 5 zinnen." }
+        ]
+      }
+    ]
+  },
+  {
+    id: "m3", title: "Module 3 — Strategisch kompas", time: "35 min", optional: false,
+    pages: [
+      { title: "3.1 — Waarom een strategisch kompas?",
+        goal: "Na deze pagina begrijp je hoe Erasmusplan-doelstellingen, horizontale prioriteiten en clusters samenhangen.",
+        html: `
+<p>Elke mobiliteit wordt verbonden met een strategisch kompas met drie lagen: de Erasmusplan-doelstellingen (de strategische doelen van het consortium), de horizontale Erasmus+-prioriteiten (Europese kwaliteitsbrillen die in elk project meespelen) en de 6 clusters (de concrete inhoudelijke thema's). Je vertrekt vanuit een leervraag binnen een cluster, die cluster sluit aan bij een Erasmusplan-doelstelling, en tijdens je mobiliteit kijk je ook door de bril van de horizontale prioriteiten.</p>
+<table><thead><tr><th>Laag</th><th>Vraag</th></tr></thead><tbody>
+<tr><td>Erasmusplan-doelstelling</td><td>Aan welk strategisch doel draagt mijn mobiliteit bij?</td></tr>
+<tr><td>Cluster</td><td>Rond welk inhoudelijk thema wil ik leren?</td></tr>
+<tr><td>Horizontale prioriteit</td><td>Welke Europese kwaliteitsbril neem ik mee?</td></tr>
+<tr><td>Impact</td><td>Wat levert mijn mobiliteit op voor mezelf, mijn CVO en het consortium?</td></tr>
+</tbody></table>
+<div class="media"><span class="tag image">Infographic 3.1</span><h4>Strategisch kompas</h4><p>Kompas: Noord = doelstellingen, Oost = prioriteiten, Zuid = 6 clusters, West = impact, midden = mijn mobiliteit.</p></div>
+<div class="media"><span class="tag audio">Audio 3.1 · 2 min</span><h4>Strategisch kompas kort uitgelegd</h4></div>`,
+        items: [
+          { type: "mc", id: "m3_mc", q: "Wat is het strategisch kompas?",
+            options: ["Een reisdocument voor deelnemers","Een schema dat helpt om je mobiliteit te verbinden met doelen, prioriteiten, clusters en impact","Een lijst met toeristische afspraken","Een financieel document"],
+            correct: 1, fb: "Het kompas verbindt je mobiliteit met doelen, prioriteiten, clusters en impact." }
+        ]
+      },
+      { title: "3.2 — De drie Erasmusplan-doelstellingen",
+        goal: "Na deze pagina kan je de drie Erasmusplan-doelstellingen herkennen en toepassen.",
+        html: `
+<p><strong>1. Curriculuminnovatie</strong> — vernieuwen en versterken van onderwijsinhoud, trajecten en didactiek. Aandacht voor transversale en soft skills, snel inspelen op een veranderende arbeidsmarkt, en aandacht voor elke lerende en zorg.</p>
+<p><strong>2. Duurzaamheid</strong> — duurzaamheid in curriculum, infrastructuur en werking. Aandacht voor het verduurzamen van infrastructuur en het integreren van SDG's en green skills.</p>
+<p><strong>3. Digitalisering</strong> — digitale innovatie en duurzame verankering van vernieuwing. Aandacht voor internationale good practices, het duurzaam verankeren van innovatie en veranderingsprocessen.</p>
+<div class="media"><span class="tag image">Infographic 3.2</span><h4>Drie Erasmusplan-doelstellingen</h4></div>`,
+        items: [
+          { type: "open", id: "m3_doel", q: "Welke Erasmusplan-doelstelling sluit op dit moment het sterkst aan bij jouw mobiliteit of interesse? Motiveer kort." }
+        ]
+      },
+      { title: "3.3 — De horizontale Erasmus+-prioriteiten",
+        goal: "Na deze pagina kan je minstens één horizontale prioriteit koppelen aan je mobiliteit.",
+        html: `
+<p>Naast onze eigen doelstellingen zijn er horizontale Erasmus+-prioriteiten die over het hele programma heen gelden. We gebruiken ze als kwaliteitsbrillen.</p>
+<p><strong>1. Inclusie en diversiteit</strong> — gelijke kansen, toegankelijkheid, diversiteit en drempels tot deelname. <em>Hoe kan mijn mobiliteit bijdragen aan toegankelijker, inclusiever of rechtvaardiger volwassenenonderwijs?</em></p>
+<p><strong>2. Digitale transformatie</strong> — digitale vaardigheden en didactiek, geletterdheid, AI, blended learning, digitale processen. <em>Welke digitale inzichten of tools kunnen relevant zijn voor mijn CVO?</em></p>
+<p><strong>3. Milieu en duurzaamheid</strong> — duurzame keuzes, groene praktijken, bewust omgaan met ecologische impact. <em>Hoe neem ik duurzaamheid mee in mijn mobiliteit?</em></p>
+<p><strong>4. Democratische participatie en Europese waarden</strong> — actief burgerschap, Europese waarden, intercultureel leren, kritisch denken, mediageletterdheid. <em>Hoe versterkt mijn mobiliteit Europees bewustzijn of intercultureel leren?</em></p>
+<div class="media"><span class="tag image">Infographic 3.3</span><h4>Vier Erasmus+-brillen</h4></div>
+<div class="media"><span class="tag">Video 3.3 · 4 min</span><h4>De horizontale prioriteiten uitgelegd</h4></div>`,
+        items: [
+          { type: "open", id: "m3_prio", q: "Welke horizontale prioriteit wil jij zeker meenemen in je mobiliteit? Waarom?" }
+        ]
+      },
+      { title: "3.4 — De 6 clusters van het consortium",
+        goal: "Na deze pagina kan je je mobiliteit koppelen aan één primaire cluster.",
+        html: `
+<p>Op basis van onze doelstellingen, eerdere mobiliteiten en leernoden werken we met 6 clusters. Je kiest één primaire cluster, eventueel een secundaire.</p>
+<p><strong>Cluster 1 — Brede cursistenbegeleiding en inclusieve didactiek.</strong> Trajectbegeleiding, zorg, basisvaardigheden, UDL, differentiatie, LifeComp, SEL, empowerment, community learning.</p>
+<p><strong>Cluster 2 — Arbeidsmarktgericht en geïntegreerd curriculum.</strong> Beroepskwalificaties, korte trajecten, EVC/RVCC, werkplekleren, sectorpartnerschappen, geïntegreerde taal- en beroepstrajecten, doorstroom.</p>
+<p><strong>Cluster 3 — AI, evaluatie en digitale transformatie.</strong> AI in lespraktijk en administratie, online evalueren in tijden van AI, blended learning, digitale tools, verantwoord en kritisch AI-gebruik.</p>
+<p><strong>Cluster 4 — Datagedreven beleid en kwaliteitszorg.</strong> Trajectopvolging, instroom-uitstroomanalyse, doelgroepmonitoring, cursistendata, impactmeting, kwaliteitszorg.</p>
+<p><strong>Cluster 5 — Leiderschap, projectmanagement en veranderkracht.</strong> Veranderingsprocessen, projectmanagement, teamleren, leiderschap, omgaan met weerstand, duurzame implementatie van innovatie.</p>
+<p><strong>Cluster 6 — Duurzaamheid en green skills.</strong> SDG's, green skills, duurzame infrastructuur, outdoor learning, ecologische transitie, duurzaam curriculum.</p>
+<div class="media"><span class="tag image">Infographic 3.4</span><h4>De 6 clusters</h4></div>`,
+        items: [
+          { type: "mc", id: "m3_cluster", q: "Mijn mobiliteit past vooral binnen:",
+            options: ["Cluster 1 — Brede cursistenbegeleiding en inclusieve didactiek","Cluster 2 — Arbeidsmarktgericht en geïntegreerd curriculum","Cluster 3 — AI, evaluatie en digitale transformatie","Cluster 4 — Datagedreven beleid en kwaliteitszorg","Cluster 5 — Leiderschap, projectmanagement en veranderkracht","Cluster 6 — Duurzaamheid en green skills"],
+            correct: null, fb: "Je keuze is bewaard. Er is hier geen fout antwoord: kies de cluster die het best bij jouw mobiliteit past." },
+          { type: "open", id: "m3_cluster_why", q: "Waarom kies je deze cluster als primaire cluster?" }
+        ]
+      },
+      { title: "3.5 — Mijn strategisch kompas invullen",
+        goal: "Na deze pagina kan je je eigen mobiliteit positioneren binnen het strategisch kompas.",
+        html: `
+<p>Breng de drie lagen samen. Je hoeft nog geen perfecte formulering te hebben; het doel is bewust nadenken over de inhoudelijke richting van je mobiliteit.</p>
+<p><em>Voorbeeld:</em> Mijn mobiliteit past binnen cluster 2 en sluit aan bij curriculuminnovatie, omdat ik wil onderzoeken hoe een partner taalverwerving en beroepsopleiding combineert in korte trajecten. De prioriteit die ik meeneem is inclusie en diversiteit. Mijn leervraag: hoe organiseert de hosting organisation de samenwerking tussen taaldocenten, beroepsdocenten en trajectbegeleiders?</p>`,
+        items: [
+          { type: "field", id: "k_cluster", label: "Mijn primaire cluster", input: "text" },
+          { type: "field", id: "k_cluster2", label: "Eventuele secundaire cluster", input: "text" },
+          { type: "field", id: "k_doel", label: "Mijn Erasmusplan-doelstelling", input: "text" },
+          { type: "field", id: "k_prio", label: "Horizontale prioriteit die ik meeneem", input: "text" },
+          { type: "field", id: "k_leervraag", label: "Mijn voorlopige leervraag", input: "textarea" },
+          { type: "field", id: "k_zelf", label: "Wat dit kan opleveren voor mezelf", input: "textarea" },
+          { type: "field", id: "k_cvo", label: "Wat dit kan opleveren voor mijn CVO", input: "textarea" },
+          { type: "field", id: "k_consortium", label: "Wat dit kan opleveren voor het consortium", input: "textarea" }
+        ]
+      }
+    ]
+  },
+  {
+    id: "m4", title: "Module 4 — Jouw mobiliteit voorbereiden", time: "25 min", optional: false,
+    pages: [
+      { title: "4.1 — Van interesse naar learning outcomes",
+        goal: "Na deze pagina kan je voorlopige learning outcomes formuleren.",
+        html: `
+<p>Een goede mobiliteit vertrekt vanuit duidelijke learning outcomes. Een interesse is breed ("ik ben geïnteresseerd in AI"), een leervraag is gerichter ("hoe gebruiken lesgevers AI voor taalfeedback?"), en een learning outcome beschrijft wat jij na afloop beter begrijpt, kan toepassen of kan uitleggen ("na de mobiliteit kan ik drie manieren beschrijven waarop AI wordt ingezet voor taalfeedback en beoordelen welke bruikbaar is in mijn CVO").</p>
+<p>Gebruik de zin <em>"Na mijn mobiliteit kan ik …"</em> met werkwoorden als beschrijven, vergelijken, analyseren, toepassen, beoordelen, toelichten of vertalen naar de eigen context.</p>
+<div class="media"><span class="tag">Video 4.1 · 4 min</span><h4>Sterke learning outcomes formuleren</h4></div>`,
+        items: [
+          { type: "field", id: "lo1", label: "Learning outcome 1", hint: "Na mijn mobiliteit kan ik …", input: "textarea" },
+          { type: "field", id: "lo2", label: "Learning outcome 2", hint: "Na mijn mobiliteit kan ik …", input: "textarea" }
+        ]
+      },
+      { title: "4.2 — Observeren en vragen stellen",
+        goal: "Na deze pagina kan je minstens drie observatievragen formuleren.",
+        html: `
+<p>Tijdens je mobiliteit verzamel je inzichten door te observeren, vragen te stellen en voorbeelden te documenteren. Observeer niet alleen wat een organisatie doet, maar ook waarom ze het zo doet, wie erbij betrokken is, welke voorwaarden nodig zijn en wat wel of niet overdraagbaar is naar je eigen CVO.</p>
+<p>Algemene observatievragen: Wat valt mij op? Welke keuzes maken zij anders dan wij? Welke aanpak lijkt sterk of roept vragen op? Welke randvoorwaarden maken deze praktijk mogelijk? Wat is bruikbaar voor mijn CVO, en wat moet ik eerst verder onderzoeken?</p>
+<div class="media"><span class="tag audio">Audio 4.2 · 2 min</span><h4>Observeren met een onderzoekende houding</h4></div>`,
+        items: [
+          { type: "field", id: "obs1", label: "Observatievraag 1", input: "textarea" },
+          { type: "field", id: "obs2", label: "Observatievraag 2", input: "textarea" },
+          { type: "field", id: "obs3", label: "Observatievraag 3", input: "textarea" }
+        ]
+      },
+      { title: "4.3 — Verwachtingen vóór, tijdens en na",
+        goal: "Na deze pagina ken je de belangrijkste verwachtingen.",
+        html: `
+<p><strong>Vóór:</strong> deze cursus afronden, je mobiliteitsfiche invullen, learning outcomes formuleren, praktische afspraken opvolgen, documenten tijdig bezorgen, contact met de hosting organisation voorbereiden en afstemmen met je CVO.</p>
+<p><strong>Tijdens:</strong> actief en professioneel deelnemen, respectvol communiceren, observaties noteren, vragen stellen vanuit je learning outcomes, aandacht voor je cluster en prioriteit, voorbeelden verzamelen indien toegestaan, rekening houden met privacy.</p>
+<p><strong>Na:</strong> reflecteren over je leerresultaten, inzichten delen binnen je CVO en het consortium, aangeven welke transfer mogelijk is, bijdragen aan disseminatie en eerlijk benoemen wat bruikbaar of verder te onderzoeken is.</p>
+<div class="media"><span class="tag image">Checklist 4.3</span><h4>Voor, tijdens en na mobiliteit</h4></div>`,
+        items: [
+          { type: "multi", id: "m4_support", q: "Waar heb je op dit moment nog ondersteuning bij nodig?",
+            options: ["Learning outcomes formuleren","Praktische documenten","Contact met de hosting organisation","Observatievragen","Disseminatie plannen","Momenteel geen extra ondersteuning"] }
+        ]
+      }
+    ]
+  },
+  {
+    id: "m5", title: "Module 5 — Eindcheck en mobiliteitsfiche", time: "25 min", optional: false,
+    pages: [
+      { title: "5.1 — Eindcheck Erasmus+ KA1 ADU",
+        goal: "Je toont aan dat je de basis van Erasmus+ KA1 ADU begrijpt.",
+        html: `<p>Deze korte eindcheck helpt je na te gaan of je de belangrijkste onderdelen begrepen hebt. Je kan ze meermaals maken; gebruik de feedback om je antwoorden te verbeteren.</p>`,
+        items: [
+          { type: "mc", id: "e1", q: "Wat is Erasmus+?", options: ["Een reisprogramma voor toeristische bezoeken","Een EU-programma voor onderwijs, opleiding, jeugd en sport","Een subsidie uitsluitend voor universiteiten","Een programma zonder link met professionele ontwikkeling"], correct: 1, fb: "Erasmus+ ondersteunt onderwijs, opleiding, jeugd en sport." },
+          { type: "tf", id: "e2", q: "Binnen ons consortium is een mobiliteit vooral een individuele ervaring zonder verwachting naar het CVO.", correct: false, fb: "Een mobiliteit draagt ook bij aan leren binnen het CVO en het consortium." },
+          { type: "mc", id: "e3", q: "Wat betekent KA1 binnen Erasmus+?", options: ["Samenwerkingspartnerschappen","Individuele leermobiliteit","Onderzoeksfinanciering","Europese examens"], correct: 1, fb: "KA1 gaat over individuele leermobiliteit." },
+          { type: "mc", id: "e5", q: "Wat is de functie van de Erasmus-accreditatie?", options: ["Losse mobiliteiten zonder strategie","Mobiliteiten verbinden met een meerjarig Erasmusplan en kwaliteitskader","Alleen administratie vereenvoudigen","Deelnemers vrijstellen van voorbereiding"], correct: 1, fb: "De accreditatie verbindt mobiliteiten met een meerjarig plan en kwaliteitskader." },
+          { type: "mc", id: "e6", q: "Welke drie Erasmusplan-doelstellingen gebruikt het consortium?", options: ["Sport, jeugd en hoger onderwijs","Curriculuminnovatie, duurzaamheid en digitalisering","Taal, rekenen en administratie","Onderzoek, publicatie en stages"], correct: 1, fb: "De drie doelstellingen zijn curriculuminnovatie, duurzaamheid en digitalisering." },
+          { type: "mc", id: "e7", q: "Welke is GEEN cluster van het consortium?", options: ["AI, evaluatie en digitale transformatie","Datagedreven beleid en kwaliteitszorg","Europese sportcompetities","Duurzaamheid en green skills"], correct: 2, fb: "Europese sportcompetities is geen cluster van het consortium." },
+          { type: "mc", id: "e8", q: "Wat is een horizontale Erasmus+-prioriteit?", options: ["Een thema dat alleen in KA2 voorkomt","Een Europese kwaliteitsbril die in Erasmus+-projecten meespeelt","Een verplicht reisdocument","Een budgetcategorie voor hotels"], correct: 1, fb: "Het is een kwaliteitsbril die over het hele programma heen meespeelt." },
+          { type: "tf", id: "e9", q: "Een goede learning outcome beschrijft wat je na de mobiliteit beter begrijpt, kan toepassen of kan uitleggen.", correct: true, fb: "Klopt: een learning outcome is concreet en toetsbaar." },
+          { type: "open", id: "e10", q: "Beschrijf in 3 tot 5 zinnen hoe jouw mobiliteit kan bijdragen aan jezelf, je CVO en het consortium." }
+        ]
+      },
+      { title: "5.2 — Persoonlijke mobiliteitsfiche",
+        goal: "Je rondt de cursus af met een persoonlijke mobiliteitsfiche die je voorbereiding samenvat.",
+        html: `<p>Vul deze fiche zo concreet mogelijk in. Ze vormt de brug tussen deze online voorbereiding en je effectieve mobiliteit. Je hoeft nog niet alles definitief te weten; geef aan waar je nog ondersteuning nodig hebt. Onderaan dien je de fiche in.</p>`,
+        items: [
+          { type: "field", id: "f_naam", label: "Naam", input: "text" },
+          { type: "field", id: "f_cvo", label: "CVO", input: "text" },
+          { type: "field", id: "f_functie", label: "Functie", input: "text" },
+          { type: "field", id: "f_email", label: "E-mailadres", input: "text" },
+          { type: "field", id: "f_type", label: "Type mobiliteit", input: "select", choices: ["Course","Jobshadowing","Teaching assignment","Invited expert","Nog te bepalen"] },
+          { type: "field", id: "f_land", label: "Land", input: "text" },
+          { type: "field", id: "f_host", label: "Hosting organisation", input: "text" },
+          { type: "field", id: "f_periode", label: "Periode", input: "text" },
+          { type: "field", id: "f_thema", label: "Thema van de mobiliteit", input: "textarea" },
+          { type: "field", id: "f_meerwaarde_zelf", label: "Verwachte meerwaarde voor mezelf", input: "textarea" },
+          { type: "field", id: "f_meerwaarde_cvo", label: "Verwachte meerwaarde voor mijn CVO", input: "textarea" },
+          { type: "field", id: "f_meerwaarde_cons", label: "Verwachte meerwaarde voor het consortium", input: "textarea" },
+          { type: "field", id: "f_disseminatie", label: "Disseminatie en transfer (eerste idee)", input: "textarea" },
+          { type: "field", id: "f_reflectie", label: "Wat wil ik meenemen in mijn houding tijdens deze mobiliteit?", input: "textarea" },
+          { type: "submit", id: "submit_fiche", label: "Mobiliteitsfiche indienen" }
+        ]
+      }
+    ]
+  },
+  {
+    id: "m6", title: "Module 6 — Verdieping: budget en documenten", time: "25 min", optional: true,
+    pages: [
+      { title: "6.1 — Hoe is het Erasmus+ budget opgebouwd?",
+        goal: "Na deze pagina begrijp je de basislogica van het Erasmus+ budget.",
+        html: `
+<p>Erasmus+ voorziet financiële ondersteuning om deelname mogelijk te maken. Het is geen onbeperkte financiering; de bedragen hangen af van de geldende regels, bestemming, duur en projectafspraken.</p>
+<table><thead><tr><th>Component</th><th>Betekenis</th></tr></thead><tbody>
+<tr><td>Reissteun</td><td>Verplaatsing naar en van de bestemming</td></tr>
+<tr><td>Individuele steun</td><td>Verblijfskosten tijdens de mobiliteit</td></tr>
+<tr><td>Cursusgeld</td><td>Deelname aan een course, indien van toepassing</td></tr>
+<tr><td>Organisatorische steun</td><td>Organisatie, voorbereiding, opvolging en kwaliteitszorg</td></tr>
+<tr><td>Inclusiesteun</td><td>Extra ondersteuning wanneer deelname anders moeilijker wordt</td></tr>
+<tr><td>Groen reizen</td><td>Mogelijke stimulans voor duurzamer vervoer</td></tr>
+</tbody></table>
+<p>Belangrijk: lees afspraken vooraf goed na, hou bewijsstukken bij, meld wijzigingen tijdig, doe geen eigen financiële beloftes aan hosting organisations en stel vragen tijdig aan de consortiumcoördinator.</p>
+<div class="media"><span class="tag">Video 6.1 · 3 min</span><h4>Wat betaalt Erasmus+ wel en niet?</h4></div>
+<div class="media"><span class="tag image">Infographic 6.1</span><h4>Budget in eenvoudige taal</h4></div>`,
+        items: [
+          { type: "mc", id: "m6_scenario", q: "Je wil tijdens je mobiliteit een extra activiteit boeken die niet in het programma stond. Wat doe je best?",
+            options: ["Gewoon boeken en achteraf indienen","Eerst nagaan of dit past binnen de afspraken en subsidieregels","De hosting organisation vragen het te factureren","De kost niet vermelden"],
+            correct: 1, fb: "Bij twijfel geldt: vraag eerst na, beslis daarna." }
+        ]
+      },
+      { title: "6.2 — Praktische documenten en afspraken",
+        goal: "Na deze pagina weet je welke praktische elementen je moet opvolgen.",
+        html: `
+<p>De exacte documenten verschillen per mobiliteitstype, maar meestal gaat het om: bevestiging van deelname, programma, afspraken met de hosting organisation, bewijs van aanwezigheid, reisdocumenten, facturen of betalingsbewijzen, verzekeringsinformatie, noodcontactgegevens en een verslag of reflectie na afloop.</p>
+<p><strong>Voor vertrek:</strong> is mijn mobiliteit goedgekeurd, is de periode duidelijk, ken ik de hosting organisation, heb ik de documenten, weet ik welke kosten mogen, heb ik learning outcomes en observatievragen, en stemde ik af met mijn CVO? <strong>Tijdens:</strong> verzamel aanwezigheidsbewijs, programma, notities, contactgegevens, materialen en foto's (met toestemming). <strong>Na:</strong> bezorg verslag, bewijsstukken, een disseminatieactie en feedback aan de coördinator.</p>
+<div class="media"><span class="tag image">Checklist 6.2</span><h4>Praktische documenten</h4></div>`,
+        items: [
+          { type: "multi", id: "m6_unclear", q: "Wat is voor jou nog onduidelijk?",
+            options: ["Welke documenten ik nodig heb","Welke kosten subsidiabel zijn","Wat ik moet bewaren","Wat ik moet indienen na afloop","Wat mijn CVO verwacht","Alles is voldoende duidelijk"] }
+        ]
+      }
+    ]
+  },
+  {
+    id: "m7", title: "Module 7 — Verdieping: observeren, dissemineren en impact", time: "35 min", optional: true,
+    pages: [
+      { title: "7.1 — Van observatie naar inzicht",
+        goal: "Na deze pagina kan je observaties omzetten in bruikbare inzichten.",
+        html: `
+<p>Niet elke indruk is meteen een bruikbaar inzicht. Maak onderscheid tussen observatie (wat zie ik?), interpretatie (wat betekent dit?), vergelijking (hoe verschilt dit van onze context?), transfer (wat kunnen wij hiermee?) en randvoorwaarden (wat is nodig?).</p>
+<p>Reflectiemodel na elke belangrijke observatie: Wat heb ik gezien of gehoord? Waarom lijkt dit belangrijk? Wat zegt dit over de werking van de organisatie? Wat is vergelijkbaar of verschillend met mijn CVO? Welke vertaling zie ik naar mijn context?</p>
+<div class="media"><span class="tag audio">Audio 7.1 · 2 min</span><h4>Reflecteren tijdens mobiliteit</h4></div>`,
+        items: [
+          { type: "field", id: "m7_obs", label: "Kies één mogelijke observatie: wat zou je kunnen zien, waarom relevant, en hoe vertalen naar je CVO?", input: "textarea" }
+        ]
+      },
+      { title: "7.2 — Disseminatie: inzichten delen",
+        goal: "Na deze pagina kan je een passende disseminatievorm kiezen.",
+        html: `
+<p>Disseminatie betekent dat je inzichten deelt met anderen. Dat hoeft niet groot of formeel te zijn. Mogelijke vormen: korte presentatie, praktijkfiche, blogbericht, workshop, beleidsnota, materiaalmap, intervisie of consortiumdeling. Disseminatie is sterker als je concreet blijft, voorbeelden gebruikt, eerlijk bent over randvoorwaarden, ook vragen deelt en een kleine vervolgstap voorstelt.</p>
+<div class="media"><span class="tag image">Infographic 7.2</span><h4>Disseminatiemenu</h4></div>`,
+        items: [
+          { type: "field", id: "m7_diss", label: "Welke disseminatievorm past bij jou, voor welke doelgroep, en waarom?", input: "textarea" }
+        ]
+      },
+      { title: "7.3 — Van inspiratie naar impact",
+        goal: "Na deze pagina kan je een eerste transferactie formuleren.",
+        html: `
+<p>Impact ontstaat niet automatisch, maar wanneer inzichten worden opgepikt, besproken, getest of vertaald. Impact kan klein beginnen: een nieuwe observatievraag in een teamoverleg, een voorbeeld delen, een checklist aanpassen, een AI-tool kritisch testen of een werkvorm uitproberen in één groep.</p>
+<div class="media"><span class="tag">Video 7.3 · 3 min</span><h4>Impact hoeft niet groot te starten</h4></div>`,
+        items: [
+          { type: "field", id: "m7_transfer", label: "Eén transferactie: wat kan je binnen één maand doen, wat heb je nodig, en wie betrek je?", input: "textarea" }
+        ]
+      }
+    ]
+  }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let answers = {};
+let completed = {};
+let current = "m0";
+
+function load() {
+  try {
+    const raw = localStorage.getItem(PARTICIPANT_KEY);
+    if (raw) { const d = JSON.parse(raw); answers = d.answers || {}; completed = d.completed || {}; }
+  } catch(e) {}
+}
+function persist() {
+  try { localStorage.setItem(PARTICIPANT_KEY, JSON.stringify({answers, completed})); } catch(e) {}
+  updateProgress();
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function renderNav() {
+  const nav = document.getElementById("navItems");
+  nav.innerHTML = "";
+  COURSE.forEach(m => {
+    const b = document.createElement("button");
+    b.className = (m.id === current ? "active" : "");
+    b.onclick = () => { current = m.id; renderModule(); renderNav(); window.scrollTo({top:0,behavior:"smooth"}); };
+    const label = document.createElement("span");
+    label.textContent = m.title.replace(/ — .*/, "");
+    b.appendChild(label);
+    if (m.optional) { const o = document.createElement("span"); o.className="mod-optional"; o.textContent="optioneel"; b.appendChild(o); }
+    if (completed[m.id]) { const s = document.createElement("span"); s.className="mod-status"; s.textContent="✓"; b.appendChild(s); }
+    nav.appendChild(b);
+  });
+}
+
+function field(it) {
+  const v = answers[it.id] || "";
+  if (it.input === "textarea")
+    return `<textarea rows="3" data-id="${it.id}">${escapeHtml(v)}</textarea>`;
+  if (it.input === "select") {
+    const opts = ["<option value=''>— kies —</option>"].concat(it.choices.map(c=>`<option ${v===c?"selected":""}>${c}</option>`)).join("");
+    return `<select data-id="${it.id}">${opts}</select>`;
+  }
+  return `<input type="text" data-id="${it.id}" value="${escapeHtml(v)}" />`;
+}
+
+function renderItem(it) {
+  if (it.type === "open") {
+    return `<div class="open-q"><div class="q">${it.q}</div><textarea rows="4" data-id="${it.id}">${escapeHtml(answers[it.id]||"")}</textarea></div>`;
+  }
+  if (it.type === "field") {
+    return `<div class="field"><label>${it.label}${it.hint?` <span class="hint">(${it.hint})</span>`:""}</label>${field(it)}</div>`;
+  }
+  if (it.type === "submit") {
+    return `<div class="btn-row"><button class="btn" data-submit="1">${it.label}</button></div><div class="save-status" id="submitStatus"></div>`;
+  }
+  if (it.type === "mc" || it.type === "tf") {
+    const opts = it.type === "tf" ? ["Juist","Fout"] : it.options;
+    const saved = answers[it.id];
+    const optHtml = opts.map((o,i)=>`<label><input type="radio" name="${it.id}" value="${i}" ${saved!==undefined&&Number(saved)===i?"checked":""}> ${o}</label>`).join("");
+    return `<div class="quiz-item"><div class="q">${it.q}</div><div class="options" data-quiz="${it.id}" data-type="${it.type}">${optHtml}</div><div class="feedback" id="fb_${it.id}"></div></div>`;
+  }
+  if (it.type === "multi") {
+    const saved = answers[it.id] || [];
+    const optHtml = it.options.map((o,i)=>`<label><input type="checkbox" data-multi="${it.id}" value="${i}" ${saved.includes(i)?"checked":""}> ${o}</label>`).join("");
+    return `<div class="quiz-item"><div class="q">${it.q}</div><div class="options">${optHtml}</div></div>`;
+  }
+  return "";
+}
+
+function renderModule() {
+  const m = COURSE.find(x=>x.id===current);
+  const main = document.getElementById("main");
+  let html = `<div class="card"><div class="module-head"><h2>${m.title}</h2><span class="richttijd">${m.time}${m.optional?" · optioneel":""}</span></div></div>`;
+  m.pages.forEach(p => {
+    html += `<div class="card"><h3 class="page-title">${p.title}</h3>`;
+    if (p.goal) html += `<div class="leerdoel"><strong>Leerdoel:</strong> ${p.goal}</div>`;
+    html += p.html;
+    if (p.items && p.items.length) {
+      html += `<div class="quiz">`;
+      p.items.forEach(it => html += renderItem(it));
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+  html += `<div class="card"><div class="complete-toggle"><input type="checkbox" id="modDone" ${completed[m.id]?"checked":""}><label for="modDone">Ik heb deze module doorgenomen</label></div>`;
+  html += `<div class="nav-buttons">`;
+  const idx = COURSE.findIndex(x=>x.id===current);
+  html += idx>0 ? `<button class="btn secondary" data-go="${COURSE[idx-1].id}">← Vorige</button>` : `<span></span>`;
+  html += idx<COURSE.length-1 ? `<button class="btn" data-go="${COURSE[idx+1].id}">Volgende →</button>` : `<span></span>`;
+  html += `</div></div>`;
+  main.innerHTML = html;
+  attachHandlers();
+}
+
+function attachHandlers() {
+  document.querySelectorAll("[data-id]").forEach(el => {
+    el.addEventListener("input", () => { answers[el.dataset.id] = el.value; persist(); });
+    el.addEventListener("change", () => { answers[el.dataset.id] = el.value; persist(); });
+  });
+  document.querySelectorAll("[data-quiz]").forEach(grp => {
+    const id = grp.dataset.quiz;
+    grp.querySelectorAll("input").forEach(inp => {
+      inp.addEventListener("change", () => {
+        answers[id] = inp.value; persist();
+        showFeedback(id);
+      });
+    });
+    if (answers[id]!==undefined) showFeedback(id);
+  });
+  document.querySelectorAll("[data-multi]").forEach(inp => {
+    inp.addEventListener("change", () => {
+      const id = inp.dataset.multi;
+      const vals = Array.from(document.querySelectorAll(`[data-multi="${id}"]:checked`)).map(x=>Number(x.value));
+      answers[id] = vals; persist();
+    });
+  });
+  document.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { current = b.dataset.go; renderModule(); renderNav(); window.scrollTo({top:0,behavior:"smooth"}); });
+  const done = document.getElementById("modDone");
+  if (done) done.onclick = () => { completed[current] = done.checked; persist(); renderNav(); };
+  const sub = document.querySelector("[data-submit]");
+  if (sub) sub.onclick = submitFiche;
+}
+
+function showFeedback(id) {
+  const it = findItem(id);
+  if (!it || it.correct === undefined) return;
+  const fb = document.getElementById("fb_"+id);
+  if (!fb) return;
+  const chosen = Number(answers[id]);
+  if (it.correct === null) { // open keuze, geen fout
+    fb.className = "feedback show ok"; fb.textContent = it.fb; return;
+  }
+  const correctIdx = it.type === "tf" ? (it.correct ? 0 : 1) : it.correct;
+  if (chosen === correctIdx) { fb.className = "feedback show ok"; fb.textContent = "Juist. " + it.fb; }
+  else { fb.className = "feedback show err"; fb.textContent = "Nog niet. " + it.fb + " Probeer opnieuw."; }
+}
+
+function findItem(id) {
+  for (const m of COURSE) for (const p of m.pages) if (p.items) for (const it of p.items) if (it.id===id) return it;
+  return null;
+}
+
+/* ============================================================
+   PROGRESS
+   ============================================================ */
+function updateProgress() {
+  const total = COURSE.filter(m=>!m.optional).length;
+  const done = COURSE.filter(m=>!m.optional && completed[m.id]).length;
+  document.getElementById("progressBar").style.width = Math.round(done/total*100)+"%";
+}
+
+/* ============================================================
+   SUBMIT
+   ============================================================ */
+async function submitFiche() {
+  const status = document.getElementById("submitStatus");
+  const naam = answers["f_naam"];
+  if (!naam) { status.textContent = "Vul minstens je naam in voor je indient."; return; }
+  status.textContent = "Bezig met indienen…";
+  const payload = {
+    type: "ka1_mobiliteitsfiche",
+    ingediend_op: new Date().toISOString(),
+    naam: naam,
+    cvo: answers["f_cvo"] || "",
+    antwoorden: answers
+  };
+  let centraalOk = false;
+  if (JSONBIN.BIN_ID && JSONBIN.ACCESS_KEY) {
+    try {
+      const r = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN.BIN_ID}`, {
+        method: "PUT",
+        headers: { "Content-Type":"application/json", "X-Access-Key": JSONBIN.ACCESS_KEY },
+        body: JSON.stringify(await mergeWithExisting(payload))
+      });
+      centraalOk = r.ok;
+    } catch(e) { centraalOk = false; }
+  }
+  // Altijd ook lokale download aanbieden als back-up
+  downloadJson(payload, `mobiliteitsfiche_${slug(naam)}.json`);
+  completed["m5"] = true; persist(); renderNav();
+  status.innerHTML = centraalOk
+    ? "Je fiche is centraal ingediend en ook lokaal opgeslagen als back-up. Bedankt."
+    : "Je fiche is gedownload als bestand. Bezorg dit aan je consortiumcoördinator (centrale opslag is niet geconfigureerd).";
+}
+
+async function mergeWithExisting(payload) {
+  // Lees bestaande inzendingen en voeg toe (append). Werkt enkel als de Access Key ook leesrechten heeft.
+  try {
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN.BIN_ID}/latest`, { headers: { "X-Access-Key": JSONBIN.ACCESS_KEY } });
+    if (r.ok) {
+      const data = await r.json();
+      const arr = Array.isArray(data.record?.inzendingen) ? data.record.inzendingen : [];
+      arr.push(payload);
+      return { inzendingen: arr };
+    }
+  } catch(e) {}
+  return { inzendingen: [payload] };
+}
+
+function downloadJson(obj, name) {
+  const blob = new Blob([JSON.stringify(obj,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+}
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+function slug(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,""); }
+
+/* ============================================================
+   INIT
+   ============================================================ */
+load();
+renderNav();
+renderModule();
+updateProgress();
+</script>
