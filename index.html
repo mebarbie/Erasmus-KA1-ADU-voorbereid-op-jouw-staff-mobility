@@ -1,27 +1,70 @@
 <!--
   ============================================================
   Erasmus+ KA1 ADU – interactieve webcursus
-  Voor publicatie op GitHub Pages
+  Voor publicatie op GitHub Pages of Netlify
   ============================================================
 
-  HOE PUBLICEREN
-  1. Sla dit bestand op als index.html
-  2. Maak een GitHub-repository (bv. ka1-cursus) en push index.html
-  3. Settings -> Pages -> Deploy from branch -> main / root
-  4. Je cursus staat dan op https://<gebruikersnaam>.github.io/ka1-cursus
+  HOE PUBLICEREN (Netlify)
+  1. Sla dit bestand op als index.html en push het naar je GitHub-repo
+  2. Ga naar netlify.com -> Add new site -> Import from GitHub
+  3. Kies je repo. Build command leeg laten, publish directory = root (/)
+  4. Deploy. Je cursus staat dan op een netlify.app-adres
+  5. Elke nieuwe push naar GitHub deployt automatisch opnieuw
 
-  CENTRALE OPSLAG INSTELLEN (JSONBin)
-  - Maak een bin aan op https://jsonbin.io
-  - Maak een Access Key met ALLEEN schrijfrechten (niet je Master Key)
-  - Vul hieronder BIN_ID en ACCESS_KEY in
-  - Let op: bij een publieke pagina is deze sleutel zichtbaar in de broncode.
-    Gebruik daarom een aparte bin en een write-only Access Key.
-  - Zolang je niets invult, werkt de cursus gewoon; inzendingen worden dan
-    enkel lokaal bewaard en kunnen als bestand gedownload worden.
+  ============================================================
+  SUPABASE INSTELLEN (login + voortgang + leerkracht-dashboard)
+  ============================================================
+  Je gebruikt je BESTAANDE Supabase-project. De tabel heet ka1_voortgang
+  zodat ze niet botst met andere tabellen.
+
+  STAP A — Config invullen (hieronder in SUPABASE):
+    - SUPABASE.URL      = Project URL (Supabase -> Project Settings -> API)
+    - SUPABASE.ANON_KEY = anon public key (zelfde pagina). Deze hoort
+      publiek te zijn; de echte beveiliging zit in RLS (stap C).
+    - LEERKRACHT_EMAILS = lijst met e-mailadressen die ALLES mogen zien
+
+  STAP B — Magic link aanzetten:
+    Supabase -> Authentication -> Providers -> Email: "Enable Email" aan,
+    en "Confirm email" mag aan blijven. Onder URL Configuration zet je je
+    site-URL (je netlify.app-adres) bij "Site URL" en bij "Redirect URLs".
+
+  STAP C — Database + beveiliging. Plak dit in Supabase -> SQL Editor -> Run:
+
+    create table if not exists ka1_voortgang (
+      user_id uuid references auth.users(id) on delete cascade,
+      email text,
+      naam text,
+      cvo text,
+      answers jsonb default '{}'::jsonb,
+      completed jsonb default '{}'::jsonb,
+      fiche_ingediend timestamptz,
+      updated_at timestamptz default now(),
+      primary key (user_id)
+    );
+
+    alter table ka1_voortgang enable row level security;
+
+    -- Cursist mag enkel eigen rij lezen/schrijven
+    create policy "eigen rij select" on ka1_voortgang
+      for select using (auth.uid() = user_id);
+    create policy "eigen rij upsert" on ka1_voortgang
+      for insert with check (auth.uid() = user_id);
+    create policy "eigen rij update" on ka1_voortgang
+      for update using (auth.uid() = user_id);
+
+    -- Leerkrachten mogen alles lezen (vul je eigen e-mailadres(sen) in)
+    create policy "leerkracht select alles" on ka1_voortgang
+      for select using (
+        (auth.jwt() ->> 'email') in ('jouw.naam@kov.be')
+      );
+
+  LET OP: vervang 'jouw.naam@kov.be' in de SQL door dezelfde adressen
+  als in LEERKRACHT_EMAILS hieronder. Beide moeten kloppen.
 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Erasmus+ KA1 ADU – voorbereid op jouw staff mobility</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
   :root {
@@ -182,13 +225,18 @@
 
 <script>
 /* ============================================================
-   CONFIGURATIE – centrale opslag (JSONBin)
-   Vul je eigen waarden in. Laat leeg om enkel lokaal te werken.
+   CONFIGURATIE – Supabase (login + opslag + dashboard)
+   Vul je eigen waarden in. Laat URL leeg om enkel lokaal te werken
+   (dan werkt de cursus zonder login, voortgang blijft in de browser).
    ============================================================ */
-const JSONBIN = {
-  BIN_ID: "",       // bv. "65f0a1b2c3..."  (laat leeg = lokaal)
-  ACCESS_KEY: "",   // write-only Access Key (NIET je Master Key)
+const SUPABASE = {
+  URL: "",        // bv. "https://xxxx.supabase.co"
+  ANON_KEY: "",   // anon public key (mag publiek zijn)
 };
+// E-mailadressen die het leerkracht-dashboard mogen zien.
+// Zet dezelfde adressen ook in de RLS-policy in de SQL (zie bovenaan).
+const LEERKRACHT_EMAILS = ["jouw.naam@kov.be"];
+
 const PARTICIPANT_KEY = "ka1adu_progress_v1";
 
 /* ============================================================
@@ -214,7 +262,7 @@ const MEDIA = {
   // ---- Module 0 ----
   v0_1:   { src:"" },   // Video 0.1 · Welkom door consortiumcoördinator
   a0_1:   { src:"" },   // Audio 0.1 · Welkom in luistervorm
-  img0_1: { src:"Afbeelding 0.1.png" },   // Afbeelding 0.1 · Routekaart Erasmus+ traject
+  img0_1: { src:"" },   // Afbeelding 0.1 · Routekaart Erasmus+ traject
   img0_2: { src:"" },   // Afbeelding 0.2 · Cursusoverzicht
 
   // ---- Module 1 ----
@@ -670,6 +718,162 @@ function expandMedia(html) {
 }
 
 /* ============================================================
+   SUPABASE: client, auth, opslag
+   ============================================================ */
+let sb = null;
+let currentUser = null;
+let saveTimer = null;
+const SUPA_ON = !!(SUPABASE.URL && SUPABASE.ANON_KEY);
+
+function isLeerkracht() {
+  return currentUser && LEERKRACHT_EMAILS
+    .map(e => e.toLowerCase())
+    .includes((currentUser.email || "").toLowerCase());
+}
+
+function initSupabase() {
+  if (!SUPA_ON) return;
+  sb = window.supabase.createClient(SUPABASE.URL, SUPABASE.ANON_KEY);
+}
+
+async function checkSession() {
+  if (!SUPA_ON) return null;
+  const { data } = await sb.auth.getSession();
+  return data.session ? data.session.user : null;
+}
+
+async function sendMagicLink(email) {
+  const redirect = window.location.href.split("#")[0];
+  return await sb.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: redirect }
+  });
+}
+
+async function signOut() {
+  if (sb) await sb.auth.signOut();
+  currentUser = null;
+  location.reload();
+}
+
+async function loadFromDb() {
+  if (!SUPA_ON || !currentUser) return;
+  const { data, error } = await sb.from("ka1_voortgang")
+    .select("answers, completed").eq("user_id", currentUser.id).maybeSingle();
+  if (!error && data) {
+    answers = data.answers || {};
+    completed = data.completed || {};
+  }
+}
+
+async function saveToDb() {
+  if (!SUPA_ON || !currentUser) return;
+  const row = {
+    user_id: currentUser.id,
+    email: currentUser.email,
+    naam: answers["f_naam"] || answers["f_naam"] || null,
+    cvo: answers["f_cvo"] || null,
+    answers, completed,
+    updated_at: new Date().toISOString()
+  };
+  await sb.from("ka1_voortgang").upsert(row, { onConflict: "user_id" });
+}
+
+function scheduleDbSave() {
+  if (!SUPA_ON || !currentUser) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToDb, 1200); // debounce
+}
+
+/* ============================================================
+   LOGIN-SCHERM
+   ============================================================ */
+function renderLogin(message) {
+  const main = document.getElementById("main");
+  document.getElementById("sidebar").classList.add("hidden");
+  main.innerHTML = `
+    <div class="card" style="max-width:520px;margin:30px auto;">
+      <h2 style="color:var(--kov-blue);margin-top:0;">Aanmelden</h2>
+      <p>Meld je aan met je e-mailadres om je voorbereiding te starten en je voortgang te bewaren. Je ontvangt een aanmeldlink in je mailbox; je hoeft geen wachtwoord te onthouden.</p>
+      <div class="field">
+        <label for="loginEmail">E-mailadres</label>
+        <input type="email" id="loginEmail" placeholder="voornaam.naam@cvo.be" />
+      </div>
+      <div class="btn-row"><button class="btn" id="loginBtn">Stuur mij een aanmeldlink</button></div>
+      <div class="save-status" id="loginStatus">${message || ""}</div>
+    </div>`;
+  document.getElementById("loginBtn").onclick = async () => {
+    const email = document.getElementById("loginEmail").value.trim();
+    const status = document.getElementById("loginStatus");
+    if (!email || !email.includes("@")) { status.textContent = "Vul een geldig e-mailadres in."; return; }
+    status.textContent = "Bezig met versturen…";
+    const { error } = await sendMagicLink(email);
+    status.textContent = error
+      ? ("Er ging iets mis: " + error.message)
+      : "Gelukt. Check je mailbox en klik op de aanmeldlink. Je mag dit tabblad sluiten.";
+  };
+}
+
+/* ============================================================
+   LEERKRACHT-DASHBOARD
+   ============================================================ */
+async function renderDashboard() {
+  const main = document.getElementById("main");
+  main.innerHTML = `<div class="card"><h2 style="color:var(--kov-blue);margin-top:0;">Leerkracht-dashboard</h2><p>Bezig met laden…</p></div>`;
+  const { data, error } = await sb.from("ka1_voortgang")
+    .select("email, naam, cvo, completed, answers, fiche_ingediend, updated_at")
+    .order("updated_at", { ascending: false });
+  if (error) {
+    main.innerHTML = `<div class="card"><h2>Leerkracht-dashboard</h2><p>Kon de gegevens niet laden: ${error.message}</p></div>`;
+    return;
+  }
+  const verplicht = COURSE.filter(m=>!m.optional);
+  let rows = (data||[]).map(r => {
+    const c = r.completed || {};
+    const done = verplicht.filter(m=>c[m.id]).length;
+    const fiche = r.answers && r.answers["f_naam"] && c["m5"] ? "ja" : "—";
+    return `<tr>
+      <td>${escapeHtml(r.naam || r.answers?.f_naam || "—")}</td>
+      <td>${escapeHtml(r.cvo || r.answers?.f_cvo || "—")}</td>
+      <td>${escapeHtml(r.email || "")}</td>
+      <td>${done}/${verplicht.length}</td>
+      <td>${fiche}</td>
+      <td>${r.updated_at ? new Date(r.updated_at).toLocaleDateString("nl-BE") : ""}</td>
+    </tr>`;
+  }).join("");
+  if (!rows) rows = `<tr><td colspan="6">Nog geen ingezonden voortgang.</td></tr>`;
+  main.innerHTML = `
+    <div class="card">
+      <h2 style="color:var(--kov-blue);margin-top:0;">Leerkracht-dashboard</h2>
+      <p>Overzicht van alle deelnemers. Klik op een naam in een latere versie voor detail; nu zie je voortgang en of de mobiliteitsfiche is ingediend.</p>
+      <table>
+        <thead><tr><th>Naam</th><th>CVO</th><th>E-mail</th><th>Verplichte modules</th><th>Fiche</th><th>Laatst actief</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="btn-row"><button class="btn secondary" onclick="exportDashboardCsv()">Exporteer als CSV</button></div>
+    </div>`;
+  window._dashData = data || [];
+}
+
+function exportDashboardCsv() {
+  const verplicht = COURSE.filter(m=>!m.optional);
+  const header = ["naam","cvo","email","verplichte_modules_klaar","totaal_verplicht","fiche_ingediend","laatst_actief"];
+  const lines = [header.join(";")];
+  (window._dashData||[]).forEach(r => {
+    const c = r.completed || {};
+    const done = verplicht.filter(m=>c[m.id]).length;
+    const fiche = r.answers && r.answers["f_naam"] && c["m5"] ? "ja" : "nee";
+    lines.push([
+      (r.naam||r.answers?.f_naam||""), (r.cvo||r.answers?.f_cvo||""), (r.email||""),
+      done, verplicht.length, fiche, r.updated_at||""
+    ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(";"));
+  });
+  const blob = new Blob([lines.join("\n")], {type:"text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "ka1_voortgang.csv"; a.click();
+}
+
+/* ============================================================
    STATE
    ============================================================ */
 let answers = {};
@@ -684,6 +888,7 @@ function load() {
 }
 function persist() {
   try { localStorage.setItem(PARTICIPANT_KEY, JSON.stringify({answers, completed})); } catch(e) {}
+  scheduleDbSave();
   updateProgress();
 }
 
@@ -824,51 +1029,39 @@ function updateProgress() {
 }
 
 /* ============================================================
-   SUBMIT
+   SUBMIT MOBILITEITSFICHE
    ============================================================ */
 async function submitFiche() {
   const status = document.getElementById("submitStatus");
   const naam = answers["f_naam"];
   if (!naam) { status.textContent = "Vul minstens je naam in voor je indient."; return; }
   status.textContent = "Bezig met indienen…";
-  const payload = {
-    type: "ka1_mobiliteitsfiche",
-    ingediend_op: new Date().toISOString(),
-    naam: naam,
-    cvo: answers["f_cvo"] || "",
-    antwoorden: answers
-  };
+  completed["m5"] = true;
+
   let centraalOk = false;
-  if (JSONBIN.BIN_ID && JSONBIN.ACCESS_KEY) {
+  if (SUPA_ON && currentUser) {
     try {
-      const r = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN.BIN_ID}`, {
-        method: "PUT",
-        headers: { "Content-Type":"application/json", "X-Access-Key": JSONBIN.ACCESS_KEY },
-        body: JSON.stringify(await mergeWithExisting(payload))
-      });
-      centraalOk = r.ok;
+      const { error } = await sb.from("ka1_voortgang").upsert({
+        user_id: currentUser.id,
+        email: currentUser.email,
+        naam: naam,
+        cvo: answers["f_cvo"] || null,
+        answers, completed,
+        fiche_ingediend: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, { onConflict: "user_id" });
+      centraalOk = !error;
     } catch(e) { centraalOk = false; }
   }
-  // Altijd ook lokale download aanbieden als back-up
-  downloadJson(payload, `mobiliteitsfiche_${slug(naam)}.json`);
-  completed["m5"] = true; persist(); renderNav();
-  status.innerHTML = centraalOk
-    ? "Je fiche is centraal ingediend en ook lokaal opgeslagen als back-up. Bedankt."
-    : "Je fiche is gedownload als bestand. Bezorg dit aan je consortiumcoördinator (centrale opslag is niet geconfigureerd).";
-}
+  persist();
+  renderNav();
 
-async function mergeWithExisting(payload) {
-  // Lees bestaande inzendingen en voeg toe (append). Werkt enkel als de Access Key ook leesrechten heeft.
-  try {
-    const r = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN.BIN_ID}/latest`, { headers: { "X-Access-Key": JSONBIN.ACCESS_KEY } });
-    if (r.ok) {
-      const data = await r.json();
-      const arr = Array.isArray(data.record?.inzendingen) ? data.record.inzendingen : [];
-      arr.push(payload);
-      return { inzendingen: arr };
-    }
-  } catch(e) {}
-  return { inzendingen: [payload] };
+  const payload = { type:"ka1_mobiliteitsfiche", ingediend_op:new Date().toISOString(), naam, cvo: answers["f_cvo"]||"", antwoorden: answers };
+  downloadJson(payload, `mobiliteitsfiche_${slug(naam)}.json`);
+
+  status.innerHTML = centraalOk
+    ? "Je fiche is ingediend en bewaard in de databank. Je consortiumcoördinator kan ze nu zien. Er is ook een back-up gedownload."
+    : "Je fiche is gedownload als bestand. Bezorg dit aan je consortiumcoördinator (databank is niet geconfigureerd of je bent niet aangemeld).";
 }
 
 function downloadJson(obj, name) {
@@ -884,10 +1077,62 @@ function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":
 function slug(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,""); }
 
 /* ============================================================
-   INIT
+   INIT / OPSTARTFLOW
    ============================================================ */
-load();
-renderNav();
-renderModule();
-updateProgress();
+function renderUserBar() {
+  const sidebar = document.getElementById("sidebar");
+  let bar = document.getElementById("userBar");
+  if (bar) bar.remove();
+  if (!SUPA_ON || !currentUser) return;
+  bar = document.createElement("div");
+  bar.id = "userBar";
+  bar.style.cssText = "border-top:1px solid var(--border);margin-top:10px;padding-top:10px;font-size:.85rem;color:var(--muted);";
+  let html = `Aangemeld als<br><strong style="color:var(--text);">${escapeHtml(currentUser.email)}</strong>`;
+  if (isLeerkracht()) {
+    html += `<button class="btn secondary" style="width:100%;margin-top:8px;" onclick="openDashboard()">Leerkracht-dashboard</button>`;
+    html += `<button class="btn secondary" style="width:100%;margin-top:6px;" onclick="openCursus()">Terug naar cursus</button>`;
+  }
+  html += `<button class="btn secondary" style="width:100%;margin-top:6px;" onclick="signOut()">Afmelden</button>`;
+  bar.innerHTML = html;
+  sidebar.appendChild(bar);
+}
+
+function openDashboard() { document.getElementById("sidebar").classList.remove("hidden"); renderDashboard(); }
+function openCursus() { renderModule(); renderNav(); renderUserBar(); }
+
+async function startCursus() {
+  document.getElementById("sidebar").classList.remove("hidden");
+  await loadFromDb();
+  renderNav();
+  if (isLeerkracht()) { renderDashboard(); }
+  else { renderModule(); }
+  renderUserBar();
+  updateProgress();
+}
+
+async function boot() {
+  load(); // lokale fallback eerst
+  if (!SUPA_ON) {
+    // Geen Supabase ingesteld: cursus werkt lokaal, zonder login
+    renderNav(); renderModule(); updateProgress();
+    return;
+  }
+  initSupabase();
+  // Reageer op terugkeer via magic link
+  sb.auth.onAuthStateChange(async (_event, session) => {
+    if (session && session.user) {
+      currentUser = session.user;
+      // schoon de tokens uit de URL
+      if (window.location.hash.includes("access_token")) {
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+      await startCursus();
+    }
+  });
+  currentUser = await checkSession();
+  if (currentUser) { await startCursus(); }
+  else { renderLogin(); }
+}
+
+boot();
 </script>
