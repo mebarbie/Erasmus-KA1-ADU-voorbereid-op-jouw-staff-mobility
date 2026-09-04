@@ -58,6 +58,26 @@
         (auth.jwt() ->> 'email') in ('jouw.naam@kov.be')
       );
 
+    -- Bewerkbare cursusinhoud voor leerkrachten.
+    -- Deelnemers mogen de gepubliceerde inhoud lezen; leerkrachten mogen wijzigen.
+    create table if not exists ka1_content (
+      key text primary key,
+      value jsonb not null default '{}'::jsonb,
+      updated_by text,
+      updated_at timestamptz default now()
+    );
+
+    alter table ka1_content enable row level security;
+
+    create policy "iedereen leest cursusinhoud" on ka1_content
+      for select using (true);
+    create policy "leerkracht wijzigt cursusinhoud" on ka1_content
+      for all using (
+        (auth.jwt() ->> 'email') in ('jouw.naam@kov.be')
+      ) with check (
+        (auth.jwt() ->> 'email') in ('jouw.naam@kov.be')
+      );
+
   LET OP: vervang 'jouw.naam@kov.be' in de SQL door dezelfde adressen
   als in LEERKRACHT_EMAILS hieronder. Beide moeten kloppen.
 -->
@@ -187,8 +207,35 @@
   .btn:hover { background: var(--kov-blue-light); }
   .btn.secondary { background: #eef3fa; color: var(--kov-blue); }
   .btn.secondary:hover { background: #e0e9f5; }
+  .btn.small { padding: 7px 10px; font-size: .85rem; }
   .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
   .nav-buttons { display: flex; justify-content: space-between; margin: 26px 0 10px; gap: 10px; }
+  .teacher-tools {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;
+    margin: -4px 0 12px;
+  }
+  .teacher-editor textarea {
+    width: 100%; min-height: 260px; border: 1px solid var(--border); border-radius: 9px;
+    padding: 10px 12px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: .9rem; line-height: 1.45;
+  }
+  .teacher-editor input, .teacher-editor select {
+    width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px;
+    font-family: inherit; font-size: .95rem; background: #fff;
+  }
+  .teacher-editor .field-grid { display: grid; grid-template-columns: 150px 1fr; gap: 10px; align-items: center; }
+  .answer-card {
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+    margin: 10px 0; background: #fbfdff;
+  }
+  .answer-card h4 { margin: 0 0 6px; color: var(--kov-blue); }
+  .answer-card .q { font-weight: 600; margin: 8px 0 4px; }
+  .answer-card .ans { white-space: pre-wrap; color: var(--text); }
+  .participant-link {
+    color: var(--kov-blue); font-weight: 700; background: none; border: none;
+    padding: 0; cursor: pointer; text-align: left; font: inherit;
+  }
+  .participant-link:hover { text-decoration: underline; }
 
   .complete-toggle { display: flex; align-items: center; gap: 10px; margin-top: 20px; padding: 12px 14px; background: #eef3fa; border-radius: 10px; }
   .complete-toggle input { width: 18px; height: 18px; }
@@ -203,6 +250,7 @@
     .layout { flex-direction: column; }
     nav.sidebar { position: static; flex: none; max-height: none; }
     .card { padding: 20px 18px; }
+    .teacher-editor .field-grid { grid-template-columns: 1fr; }
   }
   .hidden { display: none; }
 </style>
@@ -238,6 +286,8 @@ const SUPABASE = {
 const LEERKRACHT_EMAILS = ["barbara.defreyne@katholiekonderwijs.vlaanderen"];
 
 const PARTICIPANT_KEY = "ka1adu_progress_v1";
+const CONTENT_KEY = "ka1adu_content_overrides_v1";
+const CONTENT_DB_KEY = "course";
 
 /* ============================================================
    CENTRAAL MEDIABLOK
@@ -680,7 +730,7 @@ function renderMediaPlaceholder(code, label, desc) {
 }
 
 function renderMedia(code, label, desc) {
-  const m = MEDIA[code];
+  const m = getMediaConfig(code);
   const src = m && m.src ? String(m.src).trim() : "";
   if (!src) return renderMediaPlaceholder(code, label, desc);
 
@@ -723,12 +773,26 @@ function expandMedia(html) {
 let sb = null;
 let currentUser = null;
 let saveTimer = null;
+let contentOverrides = { pages: {}, media: {} };
 const SUPA_ON = !!(SUPABASE.URL && SUPABASE.ANON_KEY);
 
 function isLeerkracht() {
   return currentUser && LEERKRACHT_EMAILS
     .map(e => e.toLowerCase())
     .includes((currentUser.email || "").toLowerCase());
+}
+
+function isLocalTeacherPreview() {
+  const localHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  return localHost && new URLSearchParams(window.location.search).get("teacher") === "1";
+}
+
+function startLocalTeacherPreview() {
+  currentUser = {
+    id: "local-teacher-preview",
+    email: LEERKRACHT_EMAILS[0],
+    isPreview: true
+  };
 }
 
 function initSupabase() {
@@ -753,11 +817,12 @@ async function sendMagicLink(email) {
 async function signOut() {
   if (sb) await sb.auth.signOut();
   currentUser = null;
-  location.reload();
+  if (isLocalTeacherPreview()) location.href = window.location.pathname;
+  else location.reload();
 }
 
 async function loadFromDb() {
-  if (!SUPA_ON || !currentUser) return;
+  if (!SUPA_ON || !currentUser || currentUser.isPreview) return;
   const { data, error } = await sb.from("ka1_voortgang")
     .select("answers, completed").eq("user_id", currentUser.id).maybeSingle();
   if (!error && data) {
@@ -766,12 +831,52 @@ async function loadFromDb() {
   }
 }
 
+async function loadContentOverrides() {
+  loadContentFromLocal();
+  if (!SUPA_ON || !sb) return;
+  const { data, error } = await sb.from("ka1_content")
+    .select("value").eq("key", CONTENT_DB_KEY).maybeSingle();
+  if (!error && data && data.value) {
+    contentOverrides = normalizeContentOverrides(data.value);
+    saveContentToLocal();
+  }
+}
+
+function loadContentFromLocal() {
+  try {
+    const raw = localStorage.getItem(CONTENT_KEY);
+    if (raw) contentOverrides = normalizeContentOverrides(JSON.parse(raw));
+  } catch(e) {}
+}
+
+function saveContentToLocal() {
+  try { localStorage.setItem(CONTENT_KEY, JSON.stringify(contentOverrides)); } catch(e) {}
+}
+
+function normalizeContentOverrides(value) {
+  return {
+    pages: value && value.pages && typeof value.pages === "object" ? value.pages : {},
+    media: value && value.media && typeof value.media === "object" ? value.media : {}
+  };
+}
+
+async function saveContentOverrides() {
+  saveContentToLocal();
+  if (!SUPA_ON || !sb || !isLeerkracht() || currentUser.isPreview) return { localOnly: true };
+  return await sb.from("ka1_content").upsert({
+    key: CONTENT_DB_KEY,
+    value: contentOverrides,
+    updated_by: currentUser.email,
+    updated_at: new Date().toISOString()
+  }, { onConflict: "key" });
+}
+
 async function saveToDb() {
-  if (!SUPA_ON || !currentUser) return;
+  if (!SUPA_ON || !currentUser || currentUser.isPreview) return;
   const row = {
     user_id: currentUser.id,
     email: currentUser.email,
-    naam: answers["f_naam"] || answers["f_naam"] || null,
+    naam: answers["f_naam"] || null,
     cvo: answers["f_cvo"] || null,
     answers, completed,
     updated_at: new Date().toISOString()
@@ -783,6 +888,18 @@ function scheduleDbSave() {
   if (!SUPA_ON || !currentUser) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveToDb, 1200); // debounce
+}
+
+function pageKey(moduleId, pageIndex) {
+  return `${moduleId}_p${pageIndex}`;
+}
+
+function getPageHtml(moduleId, pageIndex, page) {
+  return contentOverrides.pages[pageKey(moduleId, pageIndex)] || page.html;
+}
+
+function getMediaConfig(code) {
+  return contentOverrides.media[code] || MEDIA[code] || {};
 }
 
 /* ============================================================
@@ -832,8 +949,9 @@ async function renderDashboard() {
     const c = r.completed || {};
     const done = verplicht.filter(m=>c[m.id]).length;
     const fiche = r.answers && r.answers["f_naam"] && c["m5"] ? "ja" : "—";
+    const idx = (data||[]).indexOf(r);
     return `<tr>
-      <td>${escapeHtml(r.naam || r.answers?.f_naam || "—")}</td>
+      <td><button class="participant-link" data-participant="${idx}">${escapeHtml(r.naam || r.answers?.f_naam || "—")}</button></td>
       <td>${escapeHtml(r.cvo || r.answers?.f_cvo || "—")}</td>
       <td>${escapeHtml(r.email || "")}</td>
       <td>${done}/${verplicht.length}</td>
@@ -845,32 +963,91 @@ async function renderDashboard() {
   main.innerHTML = `
     <div class="card">
       <h2 style="color:var(--kov-blue);margin-top:0;">Leerkracht-dashboard</h2>
-      <p>Overzicht van alle deelnemers. Klik op een naam in een latere versie voor detail; nu zie je voortgang en of de mobiliteitsfiche is ingediend.</p>
+      <p>Overzicht van alle deelnemers. Klik op een naam om alle ingevulde antwoorden per module te bekijken.</p>
       <table>
         <thead><tr><th>Naam</th><th>CVO</th><th>E-mail</th><th>Verplichte modules</th><th>Fiche</th><th>Laatst actief</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <div class="btn-row"><button class="btn secondary" onclick="exportDashboardCsv()">Exporteer als CSV</button></div>
-    </div>`;
+    </div>
+    <div id="participantDetail"></div>`;
   window._dashData = data || [];
+  document.querySelectorAll("[data-participant]").forEach(btn => {
+    btn.onclick = () => renderParticipantDetail(Number(btn.dataset.participant));
+  });
+}
+
+function renderParticipantDetail(idx) {
+  const r = (window._dashData || [])[idx];
+  const target = document.getElementById("participantDetail");
+  if (!r || !target) return;
+  const c = r.completed || {};
+  const a = r.answers || {};
+  let html = `
+    <div class="card">
+      <h2 style="color:var(--kov-blue);margin-top:0;">${escapeHtml(r.naam || a.f_naam || "Deelnemer")}</h2>
+      <p>${escapeHtml(r.email || "")}${r.cvo || a.f_cvo ? " · " + escapeHtml(r.cvo || a.f_cvo) : ""}</p>
+      <table>
+        <thead><tr><th>Module</th><th>Status</th></tr></thead>
+        <tbody>${COURSE.map(m=>`<tr><td>${escapeHtml(m.title)}</td><td>${c[m.id] ? "doorgenomen" : "nog niet aangeduid"}</td></tr>`).join("")}</tbody>
+      </table>`;
+  COURSE.forEach(m => {
+    const cards = [];
+    m.pages.forEach(p => {
+      (p.items || []).forEach(it => {
+        if (a[it.id] === undefined || a[it.id] === "" || (Array.isArray(a[it.id]) && !a[it.id].length)) return;
+        cards.push(`<div class="q">${escapeHtml(questionLabel(it))}</div><div class="ans">${escapeHtml(answerLabel(it, a[it.id]))}</div>`);
+      });
+    });
+    if (cards.length) {
+      html += `<div class="answer-card"><h4>${escapeHtml(m.title)}</h4>${cards.join("")}</div>`;
+    }
+  });
+  html += `<div class="btn-row"><button class="btn secondary" onclick="document.getElementById('participantDetail').innerHTML=''">Sluit detail</button></div></div>`;
+  target.innerHTML = html;
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function questionLabel(it) {
+  return it.q || it.label || it.id;
+}
+
+function answerLabel(it, value) {
+  if (it.type === "tf") return Number(value) === 0 ? "Juist" : "Fout";
+  if (it.type === "mc") return it.options && it.options[Number(value)] ? it.options[Number(value)] : value;
+  if (it.type === "multi") {
+    const vals = Array.isArray(value) ? value : [];
+    return vals.map(i => it.options && it.options[i] ? it.options[i] : i).join(", ");
+  }
+  return value;
 }
 
 function exportDashboardCsv() {
   const verplicht = COURSE.filter(m=>!m.optional);
-  const header = ["naam","cvo","email","verplichte_modules_klaar","totaal_verplicht","fiche_ingediend","laatst_actief"];
+  const answerItems = allAnswerItems();
+  const header = ["naam","cvo","email","verplichte_modules_klaar","totaal_verplicht","fiche_ingediend","laatst_actief"]
+    .concat(answerItems.map(it => it.id));
   const lines = [header.join(";")];
   (window._dashData||[]).forEach(r => {
     const c = r.completed || {};
+    const a = r.answers || {};
     const done = verplicht.filter(m=>c[m.id]).length;
     const fiche = r.answers && r.answers["f_naam"] && c["m5"] ? "ja" : "nee";
     lines.push([
       (r.naam||r.answers?.f_naam||""), (r.cvo||r.answers?.f_cvo||""), (r.email||""),
       done, verplicht.length, fiche, r.updated_at||""
-    ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(";"));
+    ].concat(answerItems.map(it => answerLabel(it, a[it.id] ?? "")))
+      .map(v=>`"${String(v).replace(/"/g,'""')}"`).join(";"));
   });
   const blob = new Blob([lines.join("\n")], {type:"text/csv"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = "ka1_voortgang.csv"; a.click();
+}
+
+function allAnswerItems() {
+  const items = [];
+  COURSE.forEach(m => m.pages.forEach(p => (p.items || []).forEach(it => items.push(it))));
+  return items;
 }
 
 /* ============================================================
@@ -950,10 +1127,16 @@ function renderModule() {
   const m = COURSE.find(x=>x.id===current);
   const main = document.getElementById("main");
   let html = `<div class="card"><div class="module-head"><h2>${m.title}</h2><span class="richttijd">${m.time}${m.optional?" · optioneel":""}</span></div></div>`;
-  m.pages.forEach(p => {
+  m.pages.forEach((p, pageIndex) => {
     html += `<div class="card"><h3 class="page-title">${p.title}</h3>`;
+    if (isLeerkracht()) {
+      html += `<div class="teacher-tools">
+        <button class="btn secondary small" data-edit-page="${pageIndex}">Tekst bewerken</button>
+        <button class="btn secondary small" data-edit-media="${pageIndex}">Afbeelding, audio of video invoegen</button>
+      </div>`;
+    }
     if (p.goal) html += `<div class="leerdoel"><strong>Leerdoel:</strong> ${p.goal}</div>`;
-    html += expandMedia(p.html);
+    html += expandMedia(getPageHtml(m.id, pageIndex, p));
     if (p.items && p.items.length) {
       html += `<div class="quiz">`;
       p.items.forEach(it => html += renderItem(it));
@@ -969,6 +1152,144 @@ function renderModule() {
   html += `</div></div>`;
   main.innerHTML = html;
   attachHandlers();
+}
+
+function renderPageEditor(pageIndex) {
+  const m = COURSE.find(x=>x.id===current);
+  const p = m.pages[pageIndex];
+  const key = pageKey(m.id, pageIndex);
+  const main = document.getElementById("main");
+  main.innerHTML = `
+    <div class="card teacher-editor">
+      <h2 style="color:var(--kov-blue);margin-top:0;">Tekst bewerken</h2>
+      <p>${escapeHtml(m.title)} · ${escapeHtml(p.title)}</p>
+      <textarea id="pageHtmlEditor">${escapeHtml(getPageHtml(m.id, pageIndex, p))}</textarea>
+      <div class="btn-row">
+        <button class="btn" id="savePageHtml">Bewaar tekst</button>
+        <button class="btn secondary" id="resetPageHtml">Herstel originele tekst</button>
+        <button class="btn secondary" id="cancelPageHtml">Annuleer</button>
+      </div>
+      <div class="save-status" id="pageEditorStatus"></div>
+    </div>`;
+  document.getElementById("savePageHtml").onclick = async () => {
+    contentOverrides.pages[key] = document.getElementById("pageHtmlEditor").value;
+    const result = await saveContentOverrides();
+    document.getElementById("pageEditorStatus").textContent = result.error
+      ? "Lokaal bewaard, maar niet in Supabase: " + result.error.message
+      : "Bewaard.";
+    renderModule();
+  };
+  document.getElementById("resetPageHtml").onclick = async () => {
+    delete contentOverrides.pages[key];
+    await saveContentOverrides();
+    renderModule();
+  };
+  document.getElementById("cancelPageHtml").onclick = renderModule;
+}
+
+function renderMediaEditor(pageIndex) {
+  const m = COURSE.find(x=>x.id===current);
+  const p = m.pages[pageIndex];
+  const codes = mediaCodesForHtml(getPageHtml(m.id, pageIndex, p));
+  const main = document.getElementById("main");
+  const options = codes.map(code => `<option value="${escapeHtml(code)}">${escapeHtml(code)}</option>`).join("")
+    + `<option value="__new">Nieuw mediablok onderaan deze pagina</option>`;
+  main.innerHTML = `
+    <div class="card teacher-editor">
+      <h2 style="color:var(--kov-blue);margin-top:0;">Media invoegen</h2>
+      <p>${escapeHtml(m.title)} · ${escapeHtml(p.title)}</p>
+      <div class="field-grid">
+        <label for="mediaCode">Mediablok</label>
+        <select id="mediaCode">${options}</select>
+        <label for="newMediaCode" data-new-media-label>Nieuwe code</label>
+        <input id="newMediaCode" data-new-media-input placeholder="bv. img_extra_m2" />
+        <label for="newMediaLabel" data-new-media-label>Titel</label>
+        <input id="newMediaLabel" data-new-media-input placeholder="bv. Afbeelding bij deze opdracht" />
+        <label for="newMediaDesc" data-new-media-label>Beschrijving</label>
+        <input id="newMediaDesc" data-new-media-input placeholder="Korte beschrijving voor toegankelijkheid" />
+        <label for="mediaType">Type</label>
+        <select id="mediaType">
+          <option value="image">Afbeelding</option>
+          <option value="audio">Audio</option>
+          <option value="youtube">YouTube-video</option>
+          <option value="vimeo">Vimeo-video</option>
+        </select>
+        <label for="mediaSrc">Link of pad</label>
+        <input id="mediaSrc" placeholder="media/bestand.png, media/audio.mp3 of YouTube-ID" />
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="saveMedia">Bewaar media</button>
+        <button class="btn secondary" id="clearMedia">Maak mediablok leeg</button>
+        <button class="btn secondary" id="cancelMedia">Annuleer</button>
+      </div>
+      <div class="save-status" id="mediaEditorStatus">Voor YouTube gebruik je best enkel de video-ID, of plak een volledige link en dan haal ik de ID eruit.</div>
+    </div>`;
+  const codeEl = document.getElementById("mediaCode");
+  const typeEl = document.getElementById("mediaType");
+  const srcEl = document.getElementById("mediaSrc");
+  const newCodeEl = document.getElementById("newMediaCode");
+  const newLabelEl = document.getElementById("newMediaLabel");
+  const newDescEl = document.getElementById("newMediaDesc");
+  if (!codes.length) codeEl.value = "__new";
+  const fill = () => {
+    const isNew = codeEl.value === "__new";
+    document.querySelectorAll("[data-new-media-input],[data-new-media-label]").forEach(el => el.classList.toggle("hidden", !isNew));
+    document.getElementById("clearMedia").classList.toggle("hidden", isNew);
+    if (isNew) { srcEl.value = ""; return; }
+    const cfg = getMediaConfig(codeEl.value);
+    typeEl.value = cfg.type || guessMediaType(codeEl.value, cfg.src || "");
+    srcEl.value = cfg.src || "";
+  };
+  codeEl.onchange = fill;
+  fill();
+  document.getElementById("saveMedia").onclick = async () => {
+    let code = codeEl.value;
+    if (code === "__new") {
+      code = slug(newCodeEl.value || `${typeEl.value}_${Date.now()}`);
+      const label = newLabelEl.value.trim() || "Nieuw mediablok";
+      const desc = newDescEl.value.trim();
+      const key = pageKey(m.id, pageIndex);
+      const pageHtml = getPageHtml(m.id, pageIndex, p);
+      contentOverrides.pages[key] = `${pageHtml}\n[[MEDIA:${code}|${label}|${desc}]]`;
+    }
+    contentOverrides.media[code] = { type: typeEl.value, src: normalizeMediaSrc(typeEl.value, srcEl.value.trim()) };
+    const result = await saveContentOverrides();
+    document.getElementById("mediaEditorStatus").textContent = result.error
+      ? "Lokaal bewaard, maar niet in Supabase: " + result.error.message
+      : "Media bewaard.";
+    renderModule();
+  };
+  document.getElementById("clearMedia").onclick = async () => {
+    contentOverrides.media[codeEl.value] = { src: "" };
+    await saveContentOverrides();
+    renderModule();
+  };
+  document.getElementById("cancelMedia").onclick = renderModule;
+}
+
+function mediaCodesForHtml(html) {
+  const codes = [];
+  String(html).replace(/\[\[MEDIA:([^\|\]]+)/g, (_, code) => { codes.push(code.trim()); return ""; });
+  return Array.from(new Set(codes));
+}
+
+function guessMediaType(code, src) {
+  if (/\.(mp3|wav|ogg|m4a)$/i.test(src) || code.startsWith("a")) return "audio";
+  if (/\.(png|jpe?g|gif|webp|svg)$/i.test(src) || code.startsWith("img")) return "image";
+  if (/vimeo/i.test(src)) return "vimeo";
+  return "youtube";
+}
+
+function normalizeMediaSrc(type, src) {
+  if (type === "youtube") {
+    const match = src.match(/[?&]v=([^&]+)/) || src.match(/youtu\.be\/([^?&]+)/) || src.match(/embed\/([^?&]+)/);
+    return match ? match[1] : src;
+  }
+  if (type === "vimeo") {
+    const match = src.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    return match ? match[1] : src;
+  }
+  return src;
 }
 
 function attachHandlers() {
@@ -998,6 +1319,8 @@ function attachHandlers() {
   if (done) done.onclick = () => { completed[current] = done.checked; persist(); renderNav(); };
   const sub = document.querySelector("[data-submit]");
   if (sub) sub.onclick = submitFiche;
+  document.querySelectorAll("[data-edit-page]").forEach(b => b.onclick = () => renderPageEditor(Number(b.dataset.editPage)));
+  document.querySelectorAll("[data-edit-media]").forEach(b => b.onclick = () => renderMediaEditor(Number(b.dataset.editMedia)));
 }
 
 function showFeedback(id) {
@@ -1087,12 +1410,14 @@ function renderUserBar() {
   bar = document.createElement("div");
   bar.id = "userBar";
   bar.style.cssText = "border-top:1px solid var(--border);margin-top:10px;padding-top:10px;font-size:.85rem;color:var(--muted);";
-  let html = `Aangemeld als<br><strong style="color:var(--text);">${escapeHtml(currentUser.email)}</strong>`;
+  let html = currentUser.isPreview
+    ? `Lokale leerkracht-preview<br><strong style="color:var(--text);">${escapeHtml(currentUser.email)}</strong>`
+    : `Aangemeld als<br><strong style="color:var(--text);">${escapeHtml(currentUser.email)}</strong>`;
   if (isLeerkracht()) {
     html += `<button class="btn secondary" style="width:100%;margin-top:8px;" onclick="openDashboard()">Leerkracht-dashboard</button>`;
     html += `<button class="btn secondary" style="width:100%;margin-top:6px;" onclick="openCursus()">Terug naar cursus</button>`;
   }
-  html += `<button class="btn secondary" style="width:100%;margin-top:6px;" onclick="signOut()">Afmelden</button>`;
+  html += `<button class="btn secondary" style="width:100%;margin-top:6px;" onclick="signOut()">${currentUser.isPreview ? "Preview sluiten" : "Afmelden"}</button>`;
   bar.innerHTML = html;
   sidebar.appendChild(bar);
 }
@@ -1102,6 +1427,7 @@ function openCursus() { renderModule(); renderNav(); renderUserBar(); }
 
 async function startCursus() {
   document.getElementById("sidebar").classList.remove("hidden");
+  await loadContentOverrides();
   await loadFromDb();
   renderNav();
   if (isLeerkracht()) { renderDashboard(); }
@@ -1114,10 +1440,19 @@ async function boot() {
   load(); // lokale fallback eerst
   if (!SUPA_ON) {
     // Geen Supabase ingesteld: cursus werkt lokaal, zonder login
+    if (isLocalTeacherPreview()) startLocalTeacherPreview();
+    loadContentFromLocal();
     renderNav(); renderModule(); updateProgress();
+    renderUserBar();
     return;
   }
   initSupabase();
+  await loadContentOverrides();
+  if (isLocalTeacherPreview()) {
+    startLocalTeacherPreview();
+    await startCursus();
+    return;
+  }
   // Reageer op terugkeer via magic link
   sb.auth.onAuthStateChange(async (_event, session) => {
     if (session && session.user) {
